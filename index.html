@@ -62,9 +62,6 @@
     }
     .kpi .label { font-size: 12px; color: var(--muted); }
     .kpi .value { font-size: 20px; font-weight: 800; margin-top: 2px; }
-    #kpiPerHead { font-size: 30px; font-weight: 900; }
-    #kpiTotal { font-size: 17px; }
-    #kpiNet { font-size: 17px; }
 
     .grid { margin-top: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch; flex: 1 1 auto; min-height: 0; overflow: hidden; }
     @media (max-width: 900px) { .grid { grid-template-columns: 1fr; overflow: visible; } .kpi-grid { grid-template-columns: 1fr 1fr; } body{overflow:auto;} .wrap{height:auto;} .card{height:auto;} .history-table th, .history-table td{font-size:11px;padding:6px;} .recent-table th, .recent-table td{font-size:11px;padding:6px;} }
@@ -196,10 +193,10 @@
       </div>
 
       <div class="kpi-grid">
-        <div class="kpi"><div class="label">총 지출</div><div id="kpiTotal" class="value">0 KRW</div></div>
-        <div class="kpi"><div class="label">공금 포함 합계</div><div id="kpiNet" class="value">0 KRW</div></div>
-        <div class="kpi"><div class="label">1인당 부담</div><div id="kpiPerHead" class="value">0 KRW</div></div>
-        <div class="kpi"><div class="label">정산 완료</div><div id="kpiDone" class="value">0%</div></div>
+        <div class="kpi"><div class="label">총 지출</div><div id="kpiTotal" class="value" style="font-size:15px;font-weight:800;line-height:1.2;white-space:nowrap">0 KRW</div></div>
+        <div class="kpi"><div class="label">공금 포함 합계</div><div id="kpiNet" class="value" style="font-size:15px;font-weight:800;line-height:1.2;white-space:nowrap">0 KRW</div></div>
+        <div class="kpi"><div class="label">1인당 부담</div><div id="kpiPerHead" class="value" style="font-size:15px;font-weight:800;line-height:1.2;white-space:nowrap">0 KRW</div></div>
+        <div class="kpi"><div class="label">정산 완료</div><div id="kpiDone" class="value" style="font-size:15px;font-weight:800;line-height:1.2;white-space:nowrap">0%</div></div>
       </div>
     </section>
 
