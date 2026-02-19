@@ -119,6 +119,8 @@
 
     .ok-dot { width:8px; height:8px; border-radius:50%; background:#29b36f; display:inline-block; margin-right:5px; }
     .warn-dot { width:8px; height:8px; border-radius:50%; background:#d89d00; display:inline-block; margin-right:5px; }
+
+    .fund-section { display:none !important; }
   </style>
 </head>
 <body>
@@ -155,6 +157,7 @@
             <option value="숙소">숙소</option>
             <option value="관광">관광</option>
             <option value="쇼핑">쇼핑</option>
+            <option value="공금">공금</option>
             <option value="기타">기타</option>
           </select>
           <input id="amount" type="number" min="0" placeholder="금액" />
@@ -169,7 +172,7 @@
         <div id="expenses" class="list"></div>
       </section>
 
-      <section class="card">
+      <section class="card fund-section">
         <h3>공금 추가</h3>
         <div class="row4">
           <input id="fundTitle" placeholder="공금명 (예: 여행 공금)" />
@@ -394,21 +397,23 @@
       for(const e of state.expenses){
         const krw = toKrw(Number(e.amount||0), e.currency);
         totalExpense += krw;
+        if ((e.category||'') === '공금' || (e.category||'') === '예비비') totalFund += krw;
         const share=krw/n;
         bal[e.payer]+=krw;
         state.persons.forEach(p=>bal[p]-=share);
       }
 
-      // 공금도 선납금으로 동일 분배 로직 적용
-      for(const f of state.funds){
+      // legacy funds support (kept for backward compatibility)
+      for(const f of (state.funds||[])){
         const krw = toKrw(Number(f.amount||0), f.currency);
+        totalExpense += krw;
         totalFund += krw;
         const share=krw/n;
         bal[f.payer]+=krw;
         state.persons.forEach(p=>bal[p]-=share);
       }
 
-      return {bal,totalExpense,totalFund,net:totalExpense+totalFund,perHead:(totalExpense+totalFund)/n};
+      return {bal,totalExpense,totalFund,net:totalExpense,perHead:(totalExpense)/n};
     }
 
     function renderSettlement(){
