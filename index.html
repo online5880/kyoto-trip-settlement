@@ -42,6 +42,7 @@
     h1 { margin: 0 0 6px; font-size: 28px; }
     .muted { color: var(--muted); font-size: 13px; }
     .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
+    .toolbar button.alt { opacity: .92; }
 
     .kpi-grid {
       margin-top: 10px;
@@ -57,12 +58,12 @@
     }
     .kpi .label { font-size: 12px; color: var(--muted); }
     .kpi .value { font-size: 20px; font-weight: 800; margin-top: 2px; }
-    #kpiPerHead { font-size: 24px; }
-    #kpiTotal { font-size: 18px; }
-    #kpiNet { font-size: 18px; }
+    #kpiPerHead { font-size: 30px; font-weight: 900; }
+    #kpiTotal { font-size: 17px; }
+    #kpiNet { font-size: 17px; }
 
     .grid { margin-top: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch; flex: 1 1 auto; min-height: 0; overflow: hidden; }
-    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; overflow: visible; } .kpi-grid { grid-template-columns: 1fr 1fr; } body{overflow:auto;} .wrap{height:auto;} .card{height:auto;} .history-table th, .history-table td{font-size:11px;padding:6px;} }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; overflow: visible; } .kpi-grid { grid-template-columns: 1fr 1fr; } body{overflow:auto;} .wrap{height:auto;} .card{height:auto;} .history-table th, .history-table td{font-size:11px;padding:6px;} .recent-table th, .recent-table td{font-size:11px;padding:6px;} }
     @media (max-width: 560px){ .kpi-grid{grid-template-columns:1fr;} }
 
     .card {
@@ -148,15 +149,17 @@
     .ok-dot { width:8px; height:8px; border-radius:50%; background:#7A816F; display:inline-block; margin-right:5px; }
     .warn-dot { width:8px; height:8px; border-radius:50%; background:#B06A52; display:inline-block; margin-right:5px; }
 
-    .recent-wrap { margin-top: 8px; border: 1px solid #DDD7CD; background: #FCF9F3; }
-    .recent-head { padding: 8px 10px; font-size: 12px; color: #756E67; border-bottom: 1px solid #DDD7CD; }
-    .recent-table { width: 100%; border-collapse: collapse; }
+    .recent-wrap { margin-top: 8px; border: 1px solid #DDD7CD; background: #F7F3EC; }
+    .recent-head { padding: 10px 12px; font-size: 13px; font-weight: 800; color: #35312E; border-bottom: 1px solid #DDD7CD; letter-spacing: .2px; }
+    .recent-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
     .recent-table th, .recent-table td { font-size: 12px; padding: 8px 10px; border-bottom: 1px solid #E6E0D7; text-align: left; }
     .recent-table th { color: #756E67; font-weight: 600; }
+    .recent-table th:nth-child(4), .recent-table td:nth-child(4) { text-align: right; white-space: nowrap; }
+    .recent-table td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .recent-empty { padding: 10px; color: #756E67; font-size: 12px; }
 
-    .transfer-card { border: 1px solid #DDD7CD; background: #F7F3EC; padding: 10px; }
-    .transfer-amount { font-size: 26px; font-weight: 900; color: #B06A52; white-space: nowrap; }
+    .transfer-card { border: 1px solid #DDD7CD; border-left: 4px solid #B06A52; background: #F7F3EC; padding: 10px; }
+    .transfer-amount { font-size: 30px; font-weight: 900; color: #B06A52; white-space: nowrap; }
 
     .history-card { grid-column: 1 / -1; min-height: 280px; }
     .history-table { width: 100%; border-collapse: collapse; }
@@ -166,7 +169,7 @@
     .history-empty { color:#756E67; font-size:12px; padding:10px; }
     .hint-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 
-    .transfer-main { font-size: 15px; font-weight: 700; color: #35312E; }
+    .transfer-main { font-size: 16px; font-weight: 800; color: #35312E; }
     .transfer-sub { font-size: 12px; color: #756E67; }
 
     #addExpenseBtn { background: #B06A52 !important; color: #FCF9F3; }
@@ -207,7 +210,7 @@
         <h3>참여자</h3>
         <div class="row">
           <input id="personInput" placeholder="이름 입력 (예: 마네)" />
-          <button id="addPersonBtn">참여자 추가</button>
+          <button id="addPersonBtn" class="alt">참여자 추가</button>
         </div>
         <div id="persons" class="list"></div>
       </section>
@@ -574,7 +577,7 @@
         d.innerHTML=`
           <label class="transfer-row ${checked ? 'done' : ''}">
             <input type="checkbox" data-key="${key}" ${checked ? 'checked' : ''} />
-            <span>${row.from} → ${row.to}</span>
+            <span>💸 ${row.from} → ${row.to}</span>
           </label>
           <strong class="${checked ? 'done' : ''}">${row.amount.toLocaleString()} KRW</strong>
         `;
