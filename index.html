@@ -24,12 +24,13 @@
       margin: 0;
       color: var(--text);
       font-family: Inter, Apple SD Gothic Neo, Noto Sans KR, sans-serif;
+      font-size: 15px;
       background: #FCF9F3;
       min-height: 100vh;
       overflow: hidden;
       width: 100vw;
     }
-    .wrap { width: 100vw; max-width: none; margin: 0; padding: 4px; height: 100vh; display: flex; flex-direction: column; gap: 10px; }
+    .wrap { width: 100vw; max-width: none; margin: 0; padding: 10px; height: 100vh; display: flex; flex-direction: column; gap: 10px; }
     .header {
       flex: 0 0 auto;
       background: var(--card);
@@ -39,7 +40,7 @@
       backdrop-filter: blur(6px);
       box-shadow: none;
     }
-    h1 { margin: 0 0 6px; font-size: 28px; }
+    h1 { margin: 0 0 8px; font-size: 34px; line-height: 1.1; }
     .muted { color: var(--muted); font-size: 13px; }
     .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
     .toolbar button.alt { opacity: .92; }
@@ -55,7 +56,7 @@
       border-radius: 0;
       background: #fff;
       padding: 12px;
-      min-height: 70px;
+      min-height: 92px;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -79,7 +80,7 @@
       height: 100%;
       overflow: hidden;
     }
-    .card h3 { margin: 0 0 10px; }
+    .card h3 { margin: 0 0 10px; font-size: 30px; }
 
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
