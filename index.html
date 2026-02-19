@@ -41,8 +41,23 @@
     .muted { color: var(--muted); font-size: 13px; }
     .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
 
+    .kpi-grid {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .kpi {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      padding: 10px;
+    }
+    .kpi .label { font-size: 12px; color: var(--muted); }
+    .kpi .value { font-size: 22px; font-weight: 800; margin-top: 2px; }
+
     .grid { margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: stretch; }
-    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .kpi-grid { grid-template-columns: 1fr 1fr; } }
 
     .card {
       background: var(--card);
@@ -113,6 +128,9 @@
       margin-right: 5px;
     }
     .sub { color: var(--muted); font-size: 12px; }
+    .transfer-row { display:flex; align-items:center; gap:8px; }
+    .transfer-row input[type="checkbox"] { transform: scale(1.15); }
+    .done { opacity: .55; text-decoration: line-through; }
 
     .totals { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
     .total-box { border: 1px solid var(--line); border-radius: 10px; padding: 10px; background: #fff; }
@@ -134,6 +152,13 @@
         <button class="danger" id="resetBtn">전체 초기화</button>
         <span id="syncState" class="muted"><span class="warn-dot"></span>미연결</span>
         <span id="status" class="muted"></span>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi"><div class="label">총 지출</div><div id="kpiTotal" class="value">0 KRW</div></div>
+        <div class="kpi"><div class="label">공금 포함 합계</div><div id="kpiNet" class="value">0 KRW</div></div>
+        <div class="kpi"><div class="label">1인당 부담</div><div id="kpiPerHead" class="value">0 KRW</div></div>
+        <div class="kpi"><div class="label">정산 완료</div><div id="kpiDone" class="value">0%</div></div>
       </div>
     </section>
 
@@ -220,7 +245,7 @@
   </div>
 
   <script>
-    const defaultState = { persons: ['마네'], expenses: [], funds: [], rate: 9.0 };
+    const defaultState = { persons: ['마네'], expenses: [], funds: [], rate: 9.0, settled: {} };
     const state = structuredClone(defaultState);
 
     const $ = (id) => document.getElementById(id);
@@ -294,6 +319,7 @@
         state.expenses = Array.isArray(remote.expenses) ? remote.expenses : [];
         state.funds = Array.isArray(remote.funds) ? remote.funds : [];
         state.rate = Number(remote.rate || 9.0);
+        state.settled = (remote.settled && typeof remote.settled === 'object') ? remote.settled : {};
         render();
         lastRemoteFingerprint = remoteFp;
         setStatus('다른 사용자 변경사항 반영됨');
@@ -323,6 +349,7 @@
         state.expenses = Array.isArray(obj.expenses) ? obj.expenses : [];
         state.funds = Array.isArray(obj.funds) ? obj.funds : [];
         state.rate = Number(obj.rate || 9.0);
+        state.settled = (obj.settled && typeof obj.settled === 'object') ? obj.settled : {};
         lastRemoteFingerprint = fp(state);
         render();
         startPolling();
@@ -422,6 +449,10 @@
       $('netKrw').textContent = `${Math.round(net).toLocaleString()} KRW`;
       $('perHeadKrw').textContent = `${Math.round(perHead).toLocaleString()} KRW`;
 
+      $('kpiTotal').textContent = `${Math.round(totalExpense).toLocaleString()} KRW`;
+      $('kpiNet').textContent = `${Math.round(net).toLocaleString()} KRW`;
+      $('kpiPerHead').textContent = `${Math.round(perHead).toLocaleString()} KRW`;
+
       const sum=$('summary'); sum.innerHTML='';
       Object.entries(bal).forEach(([p,v])=>{
         const d=document.createElement('div'); d.className='item';
@@ -439,16 +470,39 @@
 
       const t=$('transfers'); t.innerHTML='';
       let i=0,j=0;
+      const transferRows = [];
       while(i<debtors.length && j<creditors.length){
         const [dp,da]=debtors[i], [cp,ca]=creditors[j];
         const m=Math.min(da,ca);
-        const d=document.createElement('div'); d.className='item';
-        d.innerHTML=`<span>${dp} → ${cp}</span><strong>${Math.round(m).toLocaleString()} KRW</strong>`;
-        t.appendChild(d);
+        transferRows.push({ from: dp, to: cp, amount: Math.round(m) });
         debtors[i][1]-=m; creditors[j][1]-=m;
         if(debtors[i][1]<=1) i++;
         if(creditors[j][1]<=1) j++;
       }
+
+      let doneCount = 0;
+      transferRows.forEach((row, idx) => {
+        const key = `${row.from}|${row.to}|${row.amount}|${idx}`;
+        const checked = !!state.settled[key];
+        if (checked) doneCount += 1;
+
+        const d=document.createElement('div'); d.className='item';
+        d.innerHTML=`
+          <label class="transfer-row ${checked ? 'done' : ''}">
+            <input type="checkbox" data-key="${key}" ${checked ? 'checked' : ''} />
+            <span>${row.from} → ${row.to}</span>
+          </label>
+          <strong class="${checked ? 'done' : ''}">${row.amount.toLocaleString()} KRW</strong>
+        `;
+        d.querySelector('input').addEventListener('change', (ev) => {
+          state.settled[key] = ev.target.checked;
+          save();
+        });
+        t.appendChild(d);
+      });
+
+      const ratio = transferRows.length ? Math.round((doneCount / transferRows.length) * 100) : 0;
+      $('kpiDone').textContent = `${ratio}%`;
     }
 
     function render(){
@@ -494,6 +548,7 @@
       const memo=$('memo').value.trim();
       if(amount<=0 || !payer) return;
       state.expenses.push({title,category,amount,currency,payer,memo,createdAt:Date.now()});
+      state.settled = {}; // transfer map invalidated by data change
       $('title').value=''; $('amount').value=''; $('memo').value='';
       save();
     };
@@ -507,6 +562,7 @@
       const memo=$('fundMemo').value.trim();
       if(amount<=0 || !payer) return;
       state.funds.push({title,category,amount,currency,payer,memo,createdAt:Date.now()});
+      state.settled = {}; // transfer map invalidated by data change
       $('fundTitle').value=''; $('fundAmount').value=''; $('fundMemo').value='';
       save();
     };
@@ -543,6 +599,7 @@
       state.expenses = [];
       state.funds = [];
       state.rate = 9.0;
+      state.settled = {};
       save();
       setStatus('초기화 완료');
     };
