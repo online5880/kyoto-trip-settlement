@@ -62,7 +62,8 @@
     #kpiNet { font-size: 18px; }
 
     .grid { margin-top: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch; flex: 1 1 auto; min-height: 0; overflow: hidden; }
-    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; overflow: visible; } .kpi-grid { grid-template-columns: 1fr 1fr; } body{overflow:auto;} .wrap{height:auto;} .card{height:auto;} }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; overflow: visible; } .kpi-grid { grid-template-columns: 1fr 1fr; } body{overflow:auto;} .wrap{height:auto;} .card{height:auto;} .history-table th, .history-table td{font-size:11px;padding:6px;} }
+    @media (max-width: 560px){ .kpi-grid{grid-template-columns:1fr;} }
 
     .card {
       background: var(--card);
@@ -156,6 +157,15 @@
 
     .transfer-card { border: 1px solid #DDD7CD; background: #F7F3EC; padding: 10px; }
     .transfer-amount { font-size: 26px; font-weight: 900; color: #B06A52; white-space: nowrap; }
+
+    .history-card { grid-column: 1 / -1; min-height: 280px; }
+    .history-table { width: 100%; border-collapse: collapse; }
+    .history-table th, .history-table td { padding: 8px 10px; border-bottom: 1px solid #E6E0D7; font-size: 12px; vertical-align: top; }
+    .history-table th { color: #756E67; text-align: left; font-weight: 700; }
+    .receipt-thumb { width: 42px; height: 42px; object-fit: cover; border: 1px solid #DDD7CD; }
+    .history-empty { color:#756E67; font-size:12px; padding:10px; }
+    .hint-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+
     .transfer-main { font-size: 15px; font-weight: 700; color: #35312E; }
     .transfer-sub { font-size: 12px; color: #756E67; }
 
@@ -222,9 +232,13 @@
           <select id="payer"></select>
           <button id="addExpenseBtn">지출 등록</button>
         </div>
+        <div class="row" style="margin-top:8px;">
+          <input id="paidAt" type="datetime-local" />
+          <input id="receipt" type="file" accept="image/*" capture="environment" />
+        </div>
         <div style="margin-top:8px;"><textarea id="memo" placeholder="영수증 메모"></textarea></div>
         <div class="sub" style="margin-top:6px;">기본 분배: 참여자 전체 균등</div>
-        <div id="expenses" class="list"></div>
+        <div id="expenses" class="list" style="display:none"></div>
       </section>
 
       <section class="card fund-section">
@@ -271,6 +285,11 @@
         <div class="sub" style="margin-top:8px; font-weight:700;">송금 가이드</div>
         <div id="transfers" class="list"></div>
       </section>
+      <section class="card history-card">
+        <h3>지출 내역 (History)</h3>
+        <div class="sub">결제 일시/카테고리/결제자/금액/영수증을 한 번에 확인</div>
+        <div id="historyTableWrap" class="list"></div>
+      </section>
     </div>
   </div>
 
@@ -282,6 +301,8 @@
     const statusEl = $('status');
     const syncStateEl = $('syncState');
     const recentExpensesEl = $('recentExpenses');
+    const historyTableWrap = $('historyTableWrap');
+    const PENDING_KEY = 'kyoto-trip-pending-sync';
 
     let currentShareId = null;
     let isRemoteApplying = false;
@@ -291,6 +312,21 @@
 
     const fp = (obj) => JSON.stringify(obj);
     const toKrw = (amount, c) => c === 'KRW' ? amount : amount * Number(state.rate || 0);
+
+    function nowLocalInput(){
+      const d=new Date();
+      const pad=n=>String(n).padStart(2,'0');
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
+    function fileToDataURL(file){
+      return new Promise((resolve,reject)=>{
+        const fr=new FileReader();
+        fr.onload=()=>resolve(fr.result);
+        fr.onerror=reject;
+        fr.readAsDataURL(file);
+      });
+    }
 
     function setStatus(msg){
       statusEl.textContent = msg;
@@ -324,6 +360,22 @@
         await fetch(`/api/share/${encodeURIComponent(currentShareId)}`, {
           method:'PUT', headers:{'content-type':'application/json'}, body: JSON.stringify({state})
         });
+      } catch {
+        try{ localStorage.setItem(PENDING_KEY, JSON.stringify(state)); }catch{}
+      }
+    }
+
+    async function flushPendingSync(){
+      if(!currentShareId) return;
+      const payload = localStorage.getItem(PENDING_KEY);
+      if(!payload) return;
+      if(!navigator.onLine) return;
+      try{
+        const pending = JSON.parse(payload);
+        await fetch(`/api/share/${encodeURIComponent(currentShareId)}`, {
+          method:'PUT', headers:{'content-type':'application/json'}, body: JSON.stringify({state: pending})
+        });
+        localStorage.removeItem(PENDING_KEY);
       } catch {}
     }
 
@@ -384,6 +436,7 @@
         lastRemoteFingerprint = fp(state);
         render();
         startPolling();
+        flushPendingSync();
         setStatus('DB 데이터 불러오기 완료');
         return true;
       } catch {
@@ -552,12 +605,34 @@
       recentExpensesEl.innerHTML = html;
     }
 
+    function renderHistoryTable(){
+      const rows = [...state.expenses].sort((a,b)=>{
+        const ta = a.paidAt ? new Date(a.paidAt).getTime() : (a.createdAt||0);
+        const tb = b.paidAt ? new Date(b.paidAt).getTime() : (b.createdAt||0);
+        return tb-ta;
+      });
+      if(!rows.length){
+        historyTableWrap.innerHTML = '<div class="history-empty">아직 지출이 없습니다.</div>';
+        return;
+      }
+      let html = '<table class="history-table"><thead><tr><th>일시</th><th>항목</th><th>카테고리</th><th>결제자</th><th>금액</th><th>메모</th><th>영수증</th></tr></thead><tbody>';
+      for(const r of rows){
+        const dt = r.paidAt || (r.createdAt? new Date(r.createdAt).toISOString().slice(0,16).replace('T',' '):'-');
+        const memo = (r.memo||'').replace(/</g,'&lt;').slice(0,40);
+        const receipt = r.receiptData ? `<a href="${r.receiptData}" target="_blank"><img class="receipt-thumb" src="${r.receiptData}"/></a>` : '-';
+        html += `<tr><td>${dt}</td><td>${r.title||'지출'}</td><td>${r.category||'기타'}</td><td>${r.payer||''}</td><td>${Number(r.amount||0).toLocaleString()} ${r.currency||''}</td><td>${memo}</td><td>${receipt}</td></tr>`;
+      }
+      html += '</tbody></table>';
+      historyTableWrap.innerHTML = html;
+    }
+
     function render(){
       renderPersons();
       renderExpenses();
       renderFunds();
       renderSettlement();
       renderRecentExpenses();
+      renderHistoryTable();
     }
 
     async function fetchRateFromApi(){
@@ -587,22 +662,31 @@
       save();
     };
 
-    const expenseEnterSubmit = () => {
+    const expenseEnterSubmit = async () => {
       const title=$('title').value.trim()||'지출';
       const category=$('category').value||'기타';
       const amount=Number($('amount').value||0);
       const currency=$('currency').value;
       const payer=$('payer').value;
       const memo=$('memo').value.trim();
+      const paidAt = $('paidAt').value || nowLocalInput();
       if(amount<=0 || !payer) return;
-      state.expenses.push({title,category,amount,currency,payer,memo,createdAt:Date.now()});
+
+      let receiptData = '';
+      const f = $('receipt').files && $('receipt').files[0];
+      if(f){
+        try { receiptData = await fileToDataURL(f); } catch {}
+      }
+
+      state.expenses.push({title,category,amount,currency,payer,memo,paidAt,receiptData,createdAt:Date.now()});
       state.settled = {}; // transfer map invalidated by data change
-      $('title').value=''; $('amount').value=''; $('memo').value='';
+      $('title').value=''; $('amount').value=''; $('memo').value=''; $('receipt').value='';
+      $('paidAt').value = nowLocalInput();
       save();
     };
 
     $('addExpenseBtn').onclick = expenseEnterSubmit;
-    ['title','amount','memo'].forEach(id=>{
+    ['title','amount','memo','paidAt'].forEach(id=>{
       $(id).addEventListener('keydown',(e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); expenseEnterSubmit(); }});
     });
 
@@ -632,6 +716,7 @@
         lastRemoteFingerprint = fp(state);
         history.replaceState(null, '', u.toString());
         startPolling();
+        flushPendingSync();
 
         try {
           await navigator.clipboard.writeText(url);
