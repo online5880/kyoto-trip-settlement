@@ -2,792 +2,1158 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>교토 여행 정산</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>교토 여행 초미니 정산</title>
   <style>
     :root {
-      --bg1: #FCF9F3;
-      --bg2: #FCF9F3;
-      --card: #FCF9F3;
-      --line: #DDD7CD;
-      --text: #35312E;
-      --muted: #756E67;
-      --primary: #35312E;
-      --primary2: #35312E;
-      --danger: #B06A52;
-      --ok: #7A816F;
-      --chip-bg: #F7F3EC;
-      --chip-text: #756E67;
+      --bg: #f4efe7;
+      --card: #fffdf8;
+      --line: #d8ccbd;
+      --text: #2f2a25;
+      --muted: #7a6d61;
+      --brand: #c16f45;
+      --brand-soft: #f5e4d8;
+      --danger: #b6413c;
+      --ok: #6d825c;
+      --tab-bg: #efe7dc;
+      --tab-active: #2f2a25;
+      --tab-active-text: #fffdf8;
     }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      color: var(--text);
-      font-family: Inter, Apple SD Gothic Neo, Noto Sans KR, sans-serif;
-      font-size: 15px;
-      background: #FCF9F3;
-      min-height: 100vh;
-      overflow: hidden;
-      width: 100vw;
-    }
-    .wrap { width: 100vw; max-width: none; margin: 0; padding: 10px; height: 100vh; display: flex; flex-direction: column; gap: 10px; }
-    .header {
-      flex: 0 0 auto;
-      background: var(--card);
-      border: 1px solid #DDD7CD;
-      border-radius: 0;
-      padding: 12px;
-      backdrop-filter: blur(6px);
-      box-shadow: none;
-    }
-    h1 { margin: 0 0 8px; font-size: 34px; line-height: 1.1; }
-    .muted { color: var(--muted); font-size: 13px; }
-    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
-    .toolbar button.alt { opacity: .92; }
 
-    .kpi-grid {
-      margin-top: 10px;
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
+    * {
+      box-sizing: border-box;
     }
-    .kpi {
-      border: 1px solid #DDD7CD;
-      border-radius: 0;
-      background: #fff;
-      padding: 12px;
-      min-height: 92px;
+
+    html,
+    body,
+    #root {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100%;
+      background: radial-gradient(circle at 20% 0%, #fbf5ec 0%, var(--bg) 45%, #ece1d3 100%);
+      color: var(--text);
+      font-family: "Pretendard", "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .app {
+      max-width: 560px;
+      margin: 0 auto;
+      min-height: 100dvh;
+      padding: 14px 14px calc(90px + env(safe-area-inset-bottom));
       display: flex;
       flex-direction: column;
-      justify-content: center;
     }
-    .kpi .label { font-size: 12px; color: var(--muted); }
-    .kpi .value { font-size: 20px; font-weight: 800; margin-top: 2px; }
 
-    .grid { margin-top: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch; flex: 1 1 auto; min-height: 0; overflow: hidden; }
-    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; overflow: visible; } .kpi-grid { grid-template-columns: 1fr 1fr; } body{overflow:auto;} .wrap{height:auto;} .card{height:auto;} .history-table th, .history-table td{font-size:11px;padding:6px;} .recent-table th, .recent-table td{font-size:11px;padding:6px;} }
-    @media (max-width: 560px){ .kpi-grid{grid-template-columns:1fr;} }
+    .header {
+      margin-bottom: 12px;
+    }
 
-    .app-shell { display: grid; grid-template-columns: 70px 1fr; gap: 10px; height: 100%; }
-    .side-nav { border: 1px solid #DDD7CD; background: #F7F3EC; display: flex; flex-direction: column; align-items: stretch; padding: 6px; }
-    .nav-btn { background: #2A2724; color: #FCF9F3; border: 1px solid #35312E; height: 46px; margin-bottom: 6px; font-size: 12px; }
-    .nav-btn.active { background: #B06A52; border-color: #B06A52; }
-    .main-pane { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+    .title {
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -0.2px;
+    }
 
+    .subtitle {
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .stack {
+      display: grid;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .tab-content {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding-bottom: 6px;
+    }
 
     .card {
-      background: var(--card);
-      border: 1px solid #DDD7CD;
-      border-radius: 0;
+      background: color-mix(in srgb, var(--card) 96%, white 4%);
+      border: 1px solid var(--line);
+      border-radius: 18px;
       padding: 12px;
-      box-shadow: none;
+      box-shadow: 0 6px 24px rgba(47, 42, 37, 0.06);
+    }
+
+    .settlement-card.done {
+      background: #e6e2dc;
+      color: #7a736d;
+      border-color: #c5b8a7;
+    }
+
+    .settlement-card.done .settlement-line,
+    .settlement-card.done .settlement-amount {
+      text-decoration: line-through;
+    }
+
+    .settlement-head {
       display: flex;
-      flex-direction: column;
-      min-height: 0;
-      height: 100%;
-      overflow: hidden;
-    }
-    .card h3 { margin: 0 0 10px; font-size: 30px; }
-
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-    .row4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
-    @media (max-width: 760px) {
-      .row, .row3, .row4 { grid-template-columns: 1fr; }
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
     }
 
-    input, select, textarea, button { font: inherit; }
-    input, select, textarea {
+    .label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    .settled-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .settlement-line {
+      text-align: center;
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    .settlement-amount {
+      display: inline-block;
+      margin-top: 6px;
       width: 100%;
-      padding: 12px;
-      border: 1px solid #DDD7CD;
-      border-radius: 0;
+      text-align: center;
+      font-size: 30px;
+      font-weight: 900;
+      color: var(--brand);
+      letter-spacing: 0.2px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .settlement-help {
+      margin-top: 6px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .summary-amount {
+      font-size: 20px;
+      font-weight: 900;
+      margin-top: 6px;
+    }
+
+    .form {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--line);
       background: #fff;
       color: var(--text);
+      padding: 11px 12px;
+      font-size: 16px;
     }
-    textarea { min-height: 60px; resize: vertical; }
 
-    button {
-      border: 0;
-      border-radius: 0;
-      padding: 10px 12px;
-      color: #fff;
-      background: #35312E;
-      font-weight: 700;
-      cursor: pointer;
+    .inline {
+      display: grid;
+      grid-template-columns: 1fr 110px;
+      gap: 8px;
     }
-    button.alt { background: var(--chip-bg); color: var(--text); border: 1px solid #DDD7CD; }
-    button.danger { background: var(--danger); }
-    button.ok { background: var(--ok); }
+
+    .payer-toggle {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+      gap: 6px;
+      background: var(--tab-bg);
+      border-radius: 12px;
+      padding: 4px;
+      border: 1px solid var(--line);
+    }
+
+    .payer-toggle button {
+      border: 0;
+      border-radius: 9px;
+      padding: 10px;
+      font-size: 14px;
+      font-weight: 800;
+      background: transparent;
+      color: var(--muted);
+    }
+
+    .payer-toggle button.active {
+      background: var(--tab-active);
+      color: var(--tab-active-text);
+    }
+
+    .btn {
+      width: 100%;
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 12px;
+      font-size: 15px;
+      font-weight: 800;
+      background: var(--brand);
+      color: #fff;
+    }
+
+    .btn.alt {
+      background: #fff;
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    .btn.danger {
+      background: var(--danger);
+    }
 
     .list {
-      margin-top: 8px;
-      border-top: 1px dashed var(--line);
-      padding-top: 8px;
-      flex: 1;
-      overflow: auto;
-      min-height: 0;
+      display: grid;
+      gap: 8px;
     }
-    .item {
+
+    .row-item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      background: #fff;
+      display: grid;
+      gap: 4px;
+    }
+
+    .row-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .row-right {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex: 0 0 auto;
+    }
+
+    .row-time {
+      font-size: 12px;
+      color: var(--muted);
+      min-width: 52px;
+    }
+
+    .row-title {
+      font-size: 14px;
+      font-weight: 800;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .row-meta {
+      font-size: 13px;
+      color: var(--muted);
       display: flex;
       justify-content: space-between;
       gap: 10px;
-      padding: 8px 0;
-      border-bottom: 1px solid #E6E0D7;
+      align-items: center;
     }
-    .item-main { display: flex; flex-direction: column; gap: 3px; }
-    .pill {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 0;
-      background: var(--chip-bg);
-      color: var(--chip-text);
+
+    .settle-check {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
       font-size: 12px;
-      margin-right: 5px;
+      color: var(--muted);
+      white-space: nowrap;
     }
-    .sub { color: var(--muted); font-size: 12px; }
-    .transfer-row { display:flex; align-items:center; gap:8px; }
-    .transfer-row input[type="checkbox"] { transform: scale(1.15); }
-    .done { opacity: .55; text-decoration: line-through; }
-    .up { color: #7A816F; }
-    .down { color: #B06A52; }
 
-    .totals { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-    .total-box { border: 1px solid #DDD7CD; border-radius: 0; padding: 12px; background: #fff; }
+    .row-item.settled {
+      opacity: 0.65;
+      background: #f4f1ec;
+    }
 
-    .ok-dot { width:8px; height:8px; border-radius:50%; background:#7A816F; display:inline-block; margin-right:5px; }
-    .warn-dot { width:8px; height:8px; border-radius:50%; background:#B06A52; display:inline-block; margin-right:5px; }
+    .row-item.settled .row-title,
+    .row-item.settled .row-meta span:first-child {
+      text-decoration: line-through;
+    }
 
-    .recent-wrap { margin-top: 8px; border: 1px solid #DDD7CD; background: #F7F3EC; }
-    .recent-head { padding: 10px 12px; font-size: 13px; font-weight: 800; color: #35312E; border-bottom: 1px solid #DDD7CD; letter-spacing: .2px; }
-    .recent-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-    .recent-table th, .recent-table td { font-size: 12px; padding: 8px 10px; border-bottom: 1px solid #E6E0D7; text-align: left; }
-    .recent-table th { color: #756E67; font-weight: 600; }
-    .recent-table th:nth-child(4), .recent-table td:nth-child(4) { text-align: right; white-space: nowrap; }
-    .recent-table td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .recent-empty { padding: 10px; color: #756E67; font-size: 12px; }
+    .chip {
+      display: inline-block;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--tab-bg);
+      padding: 2px 8px;
+      font-size: 11px;
+      color: var(--muted);
+      margin-right: 6px;
+    }
 
-    .transfer-card { border: 1px solid #DDD7CD; border-left: 4px solid #B06A52; background: #F7F3EC; padding: 10px; }
-    .transfer-amount { font-size: 30px; font-weight: 900; color: #B06A52; white-space: nowrap; }
+    .empty {
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+      padding: 16px 0;
+    }
 
-    .history-card { grid-column: 1 / -1; min-height: 280px; }
-    .history-table { width: 100%; border-collapse: collapse; }
-    .history-table th, .history-table td { padding: 8px 10px; border-bottom: 1px solid #E6E0D7; font-size: 12px; vertical-align: top; }
-    .history-table th { color: #756E67; text-align: left; font-weight: 700; }
-    .receipt-thumb { width: 42px; height: 42px; object-fit: cover; border: 1px solid #DDD7CD; }
-    .history-empty { color:#756E67; font-size:12px; padding:10px; }
-    .hint-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .participant-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
 
-    .transfer-main { font-size: 16px; font-weight: 800; color: #35312E; }
-    .transfer-sub { font-size: 12px; color: #756E67; }
+    .participant-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
 
-    #addExpenseBtn { background: #B06A52 !important; color: #FCF9F3; }
+    .participant-actions {
+      display: inline-flex;
+      gap: 6px;
+    }
 
+    .icon-btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
 
-    .fund-section { display:none !important; }
+    .icon-btn.danger {
+      border-color: #e2b9b5;
+      color: var(--danger);
+    }
+
+    .bottom-nav {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 0;
+      width: min(560px, 100%);
+      padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+      background: linear-gradient(180deg, rgba(244, 239, 231, 0) 0%, rgba(244, 239, 231, 0.85) 18%, rgba(244, 239, 231, 1) 100%);
+      z-index: 40;
+    }
+
+    .bottom-nav-inner {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      background: var(--tab-bg);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 5px;
+      box-shadow: 0 12px 26px rgba(47, 42, 37, 0.08);
+    }
+
+    .tab-btn {
+      border: 0;
+      border-radius: 12px;
+      background: transparent;
+      color: var(--muted);
+      padding: 10px 4px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .tab-btn.active {
+      background: var(--tab-active);
+      color: var(--tab-active-text);
+    }
+
+    .settings-row {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .sync-state {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .undo-toast {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: calc(78px + env(safe-area-inset-bottom));
+      width: min(520px, calc(100% - 24px));
+      background: #2f2a25;
+      color: #fff;
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      z-index: 50;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .undo-toast button {
+      border: 0;
+      border-radius: 8px;
+      background: #fff;
+      color: #2f2a25;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 7px 10px;
+    }
+
+    @media (min-width: 640px) {
+      .app {
+        padding-top: 18px;
+      }
+      .title {
+        font-size: 24px;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap"><div class="app-shell"><aside class="side-nav">
-      <button class="nav-btn active" data-tab="overview">메인</button>
-      <button class="nav-btn" data-tab="expenses">지출</button>
-      <button class="nav-btn" data-tab="settings">설정</button>
-    </aside><div class="main-pane">
-    <section class="header">
-      <h1>교토 여행 정산 ⛩️</h1>
-      <div class="muted">교토 톤 정산 보드 · D1 실시간 동기화</div>
-      <div class="toolbar">
-        <button class="alt" id="copyShareBtn">공유 링크 생성/복사 (DB)</button>
-        <button class="alt" id="loadShareBtn">링크 데이터 불러오기 (DB)</button>
-        <button class="danger" id="resetBtn">전체 초기화</button>
-        <span id="syncState" class="muted"><span class="warn-dot"></span>미연결</span>
-        <span id="status" class="muted"></span>
-      </div>
+  <div id="root"></div>
 
-      <div class="kpi-grid" id="panelKPI">
-        <div class="kpi"><div class="label">총 지출</div><div id="kpiTotal" class="value" style="font-size:15px;font-weight:800;line-height:1.2;white-space:nowrap">0 KRW</div></div>
-        <div class="kpi"><div class="label">공금 포함 합계</div><div id="kpiNet" class="value" style="font-size:15px;font-weight:800;line-height:1.2;white-space:nowrap">0 KRW</div></div>
-        <div class="kpi"><div class="label">1인당 부담</div><div id="kpiPerHead" class="value" style="font-size:15px;font-weight:800;line-height:1.2;white-space:nowrap">0 KRW</div></div>
-        <div class="kpi"><div class="label">정산 완료</div><div id="kpiDone" class="value" style="font-size:15px;font-weight:800;line-height:1.2;white-space:nowrap">0%</div></div>
-      </div>
-    </section>
+  <script type="module">
+    import React, { useEffect, useMemo, useRef, useState } from "https://esm.sh/react@18.3.1";
+    import { createRoot } from "https://esm.sh/react-dom@18.3.1/client";
 
-      <div class="recent-wrap" id="panelRecent">
-        <div class="recent-head">최근 지출 5개</div>
-        <div id="recentExpenses"></div>
-      </div>
-    </section>
-
-    <div class="grid">
-      <section class="card" id="panelParticipants" data-tab="settings">
-        <h3>참여자</h3>
-        <div class="row">
-          <input id="personInput" placeholder="이름 입력 (예: 마네)" />
-          <button id="addPersonBtn" class="alt">참여자 추가</button>
-        </div>
-        <div id="persons" class="list"></div>
-      </section>
-
-      <section class="card" id="panelExpense" data-tab="expenses">
-        <h3>지출 추가</h3>
-        <div class="row4">
-          <input id="title" placeholder="항목명 (예: 점심)" />
-          <select id="category">
-            <option value="식비">식비</option>
-            <option value="교통">교통</option>
-            <option value="숙소">숙소</option>
-            <option value="관광">관광</option>
-            <option value="쇼핑">쇼핑</option>
-            <option value="공금">공금</option>
-            <option value="기타">기타</option>
-          </select>
-          <input id="amount" type="number" inputmode="decimal" min="0" placeholder="금액" />
-          <select id="currency"><option value="JPY">JPY</option><option value="KRW">KRW</option></select>
-        </div>
-        <div class="row" style="margin-top:8px;">
-          <select id="payer"></select>
-          <button id="addExpenseBtn">지출 등록</button>
-        </div>
-        <div class="row" style="margin-top:8px;">
-          <input id="paidAt" type="datetime-local" />
-          <input id="receipt" type="file" accept="image/*" capture="environment" />
-        </div>
-        <div style="margin-top:8px;"><textarea id="memo" placeholder="영수증 메모"></textarea></div>
-        <div class="sub" style="margin-top:6px;">기본 분배: 참여자 전체 균등</div>
-        <div id="expenses" class="list" style="display:none"></div>
-      </section>
-
-      <section class="card fund-section">
-        <h3>공금 추가</h3>
-        <div class="row4">
-          <input id="fundTitle" placeholder="공금명 (예: 여행 공금)" />
-          <select id="fundCategory">
-            <option value="공금">공금</option>
-            <option value="예비비">예비비</option>
-          </select>
-          <input id="fundAmount" type="number" inputmode="decimal" min="0" placeholder="금액" />
-          <select id="fundCurrency"><option value="JPY">JPY</option><option value="KRW">KRW</option></select>
-        </div>
-        <div class="row" style="margin-top:8px;">
-          <select id="fundPayer"></select>
-          <button id="addFundBtn" class="ok">공금 등록</button>
-        </div>
-        <div style="margin-top:8px;"><textarea id="fundMemo" placeholder="공금 메모"></textarea></div>
-        <div class="sub" style="margin-top:6px;">공금은 전체가 함께 부담한 선납금으로 계산됩니다.</div>
-        <div id="funds" class="list"></div>
-      </section>
-
-      <section class="card" id="panelRate" data-tab="settings">
-        <h3>환율 설정</h3>
-        <div class="row">
-          <input id="rateDisplay" value="로딩 중..." readonly />
-          <button id="fetchRateBtn" class="alt">환율 새로고침</button>
-        </div>
-        <div class="sub" style="margin-top:8px;">JPY→KRW 환율은 API 값으로만 사용됩니다.</div>
-        <div class="sub" id="rateMeta" style="margin-top:4px;"></div>
-
-        <div class="totals">
-          <div class="total-box"><div class="sub">총 지출 (KRW)</div><strong id="totalKrw">0 KRW</strong></div>
-          <div class="total-box"><div class="sub">공금 총액 (KRW)</div><strong id="totalFundKrw">0 KRW</strong></div>
-          <div class="total-box"><div class="sub">정산 대상 총액 (KRW)</div><strong id="netKrw">0 KRW</strong></div>
-          <div class="total-box"><div class="sub">1인당 부담</div><strong id="perHeadKrw">0 KRW</strong></div>
-        </div>
-      </section>
-
-      <section class="card" id="panelSettlement" data-tab="overview">
-        <h3>정산 결과</h3>
-        <div class="sub">+는 받을 돈 / -는 보낼 돈</div>
-        <div id="summary" class="list"></div>
-        <div class="sub" style="margin-top:8px; font-weight:700;">송금 가이드</div>
-        <div id="transfers" class="list"></div>
-      </section>
-      <section class="card history-card" id="panelHistory" data-tab="expenses">
-        <h3>지출 내역 (History)</h3>
-        <div class="sub">결제 일시/카테고리/결제자/금액/영수증을 한 번에 확인</div>
-        <div id="historyTableWrap" class="list"></div>
-      </section>
-    </div>
-  </div>
-
-  <script>
-    const defaultState = { persons: ['마네'], expenses: [], funds: [], rate: 9.0, settled: {} };
-    const state = structuredClone(defaultState);
-
-    const $ = (id) => document.getElementById(id);
-    const statusEl = $('status');
-    const syncStateEl = $('syncState');
-    const recentExpensesEl = $('recentExpenses');
-    const historyTableWrap = $('historyTableWrap');
-    const PENDING_KEY = 'kyoto-trip-pending-sync';
-
-    let currentShareId = null;
-    let isRemoteApplying = false;
-    let syncTimer = null;
-    let pollTimer = null;
-    let lastRemoteFingerprint = '';
-
-    const fp = (obj) => JSON.stringify(obj);
-    const toKrw = (amount, c) => c === 'KRW' ? amount : amount * Number(state.rate || 0);
-
-    function nowLocalInput(){
-      const d=new Date();
-      const pad=n=>String(n).padStart(2,'0');
-      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    }
-
-    function fileToDataURL(file){
-      return new Promise((resolve,reject)=>{
-        const fr=new FileReader();
-        fr.onload=()=>resolve(fr.result);
-        fr.onerror=reject;
-        fr.readAsDataURL(file);
-      });
-    }
-
-    function setStatus(msg){
-      statusEl.textContent = msg;
-      setTimeout(()=>{ if(statusEl.textContent===msg) statusEl.textContent=''; }, 2000);
-    }
-
-    function setSyncState(connected){
-      if(connected){
-        syncStateEl.innerHTML = '<span class="ok-dot"></span>실시간 동기화 ON';
-      } else {
-        syncStateEl.innerHTML = '<span class="warn-dot"></span>미연결';
-      }
-    }
-
-    function save(){
-      render();
-      scheduleSync();
-    }
-
-    async function createShareUrlOnServer(){
-      const res = await fetch('/api/share', {
-        method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({state})
-      });
-      if(!res.ok) throw new Error('share create failed');
-      return await res.json();
-    }
-
-    async function updateShareOnServer(){
-      if(!currentShareId || isRemoteApplying) return;
-      try{
-        await fetch(`/api/share/${encodeURIComponent(currentShareId)}`, {
-          method:'PUT', headers:{'content-type':'application/json'}, body: JSON.stringify({state})
-        });
-      } catch {
-        try{ localStorage.setItem(PENDING_KEY, JSON.stringify(state)); }catch{}
-      }
-    }
-
-    async function flushPendingSync(){
-      if(!currentShareId) return;
-      const payload = localStorage.getItem(PENDING_KEY);
-      if(!payload) return;
-      if(!navigator.onLine) return;
-      try{
-        const pending = JSON.parse(payload);
-        await fetch(`/api/share/${encodeURIComponent(currentShareId)}`, {
-          method:'PUT', headers:{'content-type':'application/json'}, body: JSON.stringify({state: pending})
-        });
-        localStorage.removeItem(PENDING_KEY);
-      } catch {}
-    }
-
-    function scheduleSync(){
-      if(!currentShareId || isRemoteApplying) return;
-      clearTimeout(syncTimer);
-      syncTimer=setTimeout(updateShareOnServer, 600);
-    }
-
-    async function pollRemote(){
-      if(!currentShareId || isRemoteApplying) return;
-      try{
-        const res = await fetch(`/api/share/${encodeURIComponent(currentShareId)}`);
-        if(!res.ok) return;
-        const body = await res.json();
-        const remote = body?.state;
-        if(!remote) return;
-        const remoteFp = fp(remote);
-        if(!lastRemoteFingerprint){ lastRemoteFingerprint = remoteFp; return; }
-        if(remoteFp === lastRemoteFingerprint) return;
-
-        isRemoteApplying = true;
-        state.persons = Array.isArray(remote.persons) ? remote.persons : ['마네'];
-        state.expenses = Array.isArray(remote.expenses) ? remote.expenses : [];
-        state.funds = Array.isArray(remote.funds) ? remote.funds : [];
-        state.rate = Number(remote.rate || 9.0);
-        state.settled = (remote.settled && typeof remote.settled === 'object') ? remote.settled : {};
-        render();
-        lastRemoteFingerprint = remoteFp;
-        setStatus('다른 사용자 변경사항 반영됨');
-      } catch {} finally {
-        isRemoteApplying = false;
-      }
-    }
-
-    function startPolling(){
-      if(pollTimer) clearInterval(pollTimer);
-      if(!currentShareId) return;
-      setSyncState(true);
-      pollTimer = setInterval(pollRemote, 4000);
-    }
-
-    async function loadFromLink(){
-      const u = new URL(location.href);
-      const sid = u.searchParams.get('sid');
-      if(!sid){ setSyncState(false); return false; }
-      try{
-        currentShareId = sid;
-        const res = await fetch(`/api/share/${encodeURIComponent(sid)}`);
-        if(!res.ok) throw new Error('not found');
-        const body = await res.json();
-        const obj = body.state;
-        state.persons = Array.isArray(obj.persons) ? obj.persons : ['마네'];
-        state.expenses = Array.isArray(obj.expenses) ? obj.expenses : [];
-        state.funds = Array.isArray(obj.funds) ? obj.funds : [];
-        state.rate = Number(obj.rate || 9.0);
-        state.settled = (obj.settled && typeof obj.settled === 'object') ? obj.settled : {};
-        lastRemoteFingerprint = fp(state);
-        render();
-        startPolling();
-        flushPendingSync();
-        setStatus('DB 데이터 불러오기 완료');
-        return true;
-      } catch {
-        setStatus('DB 링크 불러오기 실패');
-        return false;
-      }
-    }
-
-    function renderPersons(){
-      const box = $('persons'); box.innerHTML='';
-      state.persons.forEach((p,i)=>{
-        const div=document.createElement('div'); div.className='item';
-        div.innerHTML = `<span>${p}</span><button class="danger">삭제</button>`;
-        div.querySelector('button').onclick = ()=>{
-          if(state.persons.length<=1) return;
-          state.persons.splice(i,1);
-          state.expenses = state.expenses.filter(e=>e.payer!==p);
-          state.funds = state.funds.filter(e=>e.payer!==p);
-          save();
-        };
-        box.appendChild(div);
-      });
-
-      const payerSel = ['payer','fundPayer'];
-      payerSel.forEach(id=>{
-        const el=$(id); el.innerHTML='';
-        state.persons.forEach(p=>{
-          const o=document.createElement('option'); o.value=p; o.textContent=p; el.appendChild(o);
-        });
-      });
-    }
-
-    function renderExpenses(){
-      const box=$('expenses'); box.innerHTML='';
-      state.expenses.forEach((e,i)=>{
-        const krw = toKrw(Number(e.amount||0), e.currency);
-        const div=document.createElement('div'); div.className='item';
-        div.innerHTML = `<div class="item-main">
-          <div><span class="pill">${e.category||'기타'}</span><span class="pill">${e.payer}</span>${e.title||'지출'}</div>
-          <div class="sub">${Number(e.amount).toLocaleString()} ${e.currency} (≈ ${Math.round(krw).toLocaleString()} KRW)</div>
-          ${e.memo ? `<div class="sub">🧾 ${e.memo}</div>` : ''}
-        </div><button class="danger">삭제</button>`;
-        div.querySelector('button').onclick=()=>{ state.expenses.splice(i,1); save(); };
-        box.appendChild(div);
-      });
-    }
-
-    function renderFunds(){
-      const box=$('funds'); box.innerHTML='';
-      state.funds.forEach((f,i)=>{
-        const krw = toKrw(Number(f.amount||0), f.currency);
-        const div=document.createElement('div'); div.className='item';
-        div.innerHTML = `<div class="item-main">
-          <div><span class="pill">${f.category||'공금'}</span><span class="pill">${f.payer}</span>${f.title||'공금'}</div>
-          <div class="sub">${Number(f.amount).toLocaleString()} ${f.currency} (≈ ${Math.round(krw).toLocaleString()} KRW)</div>
-          ${f.memo ? `<div class="sub">🧾 ${f.memo}</div>` : ''}
-        </div><button class="danger">삭제</button>`;
-        div.querySelector('button').onclick=()=>{ state.funds.splice(i,1); save(); };
-        box.appendChild(div);
-      });
-    }
-
-    function calc(){
-      const n=Math.max(1,state.persons.length);
-      const bal=Object.fromEntries(state.persons.map(p=>[p,0]));
-      let totalExpense=0, totalFund=0;
-
-      for(const e of state.expenses){
-        const krw = toKrw(Number(e.amount||0), e.currency);
-        totalExpense += krw;
-        if ((e.category||'') === '공금' || (e.category||'') === '예비비') totalFund += krw;
-        const share=krw/n;
-        bal[e.payer]+=krw;
-        state.persons.forEach(p=>bal[p]-=share);
-      }
-
-      // legacy funds support (kept for backward compatibility)
-      for(const f of (state.funds||[])){
-        const krw = toKrw(Number(f.amount||0), f.currency);
-        totalExpense += krw;
-        totalFund += krw;
-        const share=krw/n;
-        bal[f.payer]+=krw;
-        state.persons.forEach(p=>bal[p]-=share);
-      }
-
-      return {bal,totalExpense,totalFund,net:totalExpense,perHead:(totalExpense)/n};
-    }
-
-    function renderSettlement(){
-      const {bal,totalExpense,totalFund,net,perHead}=calc();
-      $('totalKrw').textContent = `${Math.round(totalExpense).toLocaleString()} KRW`;
-      $('totalFundKrw').textContent = `${Math.round(totalFund).toLocaleString()} KRW`;
-      $('netKrw').textContent = `${Math.round(net).toLocaleString()} KRW`;
-      $('perHeadKrw').textContent = `${Math.round(perHead).toLocaleString()} KRW`;
-
-      $('kpiTotal').textContent = `${Math.round(totalExpense).toLocaleString()} KRW`;
-      $('kpiNet').textContent = `${Math.round(net).toLocaleString()} KRW`;
-      $('kpiPerHead').textContent = `${Math.round(perHead).toLocaleString()} KRW`;
-
-      const sum=$('summary'); sum.innerHTML='';
-      Object.entries(bal).forEach(([p,v])=>{
-        const d=document.createElement('div'); d.className='item';
-        d.innerHTML=`<span>${p}</span><strong>${Math.round(v).toLocaleString()} KRW</strong>`;
-        sum.appendChild(d);
-      });
-
-      const debtors=[], creditors=[];
-      for(const [p,v] of Object.entries(bal)){
-        if(v<-1) debtors.push([p,-v]);
-        if(v>1) creditors.push([p,v]);
-      }
-      debtors.sort((a,b)=>b[1]-a[1]);
-      creditors.sort((a,b)=>b[1]-a[1]);
-
-      const t=$('transfers'); t.innerHTML='';
-      let i=0,j=0;
-      const transferRows = [];
-      while(i<debtors.length && j<creditors.length){
-        const [dp,da]=debtors[i], [cp,ca]=creditors[j];
-        const m=Math.min(da,ca);
-        transferRows.push({ from: dp, to: cp, amount: Math.round(m) });
-        debtors[i][1]-=m; creditors[j][1]-=m;
-        if(debtors[i][1]<=1) i++;
-        if(creditors[j][1]<=1) j++;
-      }
-
-      let doneCount = 0;
-      transferRows.forEach((row, idx) => {
-        const key = `${row.from}|${row.to}|${row.amount}|${idx}`;
-        const checked = !!state.settled[key];
-        if (checked) doneCount += 1;
-
-        const d=document.createElement('div'); d.className='item';
-        d.innerHTML=`
-          <label class="transfer-row ${checked ? 'done' : ''}">
-            <input type="checkbox" data-key="${key}" ${checked ? 'checked' : ''} />
-            <span>💸 ${row.from} → ${row.to}</span>
-          </label>
-          <strong class="${checked ? 'done' : ''}">${row.amount.toLocaleString()} KRW</strong>
-        `;
-        d.querySelector('input').addEventListener('change', (ev) => {
-          state.settled[key] = ev.target.checked;
-          save();
-        });
-        t.appendChild(d);
-      });
-
-      const ratio = transferRows.length ? Math.round((doneCount / transferRows.length) * 100) : 0;
-      $('kpiDone').textContent = `${ratio}%`;
-    }
-
-    function renderRecentExpenses(){
-      const rows = [...state.expenses].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,5);
-      if(!rows.length){
-        recentExpensesEl.innerHTML = '<div class="recent-empty">아직 지출이 없습니다.</div>';
-        return;
-      }
-      let html = '<table class="recent-table"><thead><tr><th>시간</th><th>항목</th><th>카테고리</th><th>금액</th><th>결제자</th></tr></thead><tbody>';
-      rows.forEach(r=>{
-        const dt = r.createdAt ? new Date(r.createdAt) : null;
-        const tm = dt ? `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}` : '-';
-        html += `<tr><td>${tm}</td><td>${r.title||'지출'}</td><td>${r.category||'기타'}</td><td>${Number(r.amount||0).toLocaleString()} ${r.currency||''}</td><td>${r.payer||''}</td></tr>`;
-      });
-      html += '</tbody></table>';
-      recentExpensesEl.innerHTML = html;
-    }
-
-    function renderHistoryTable(){
-      const rows = [...state.expenses].sort((a,b)=>{
-        const ta = a.paidAt ? new Date(a.paidAt).getTime() : (a.createdAt||0);
-        const tb = b.paidAt ? new Date(b.paidAt).getTime() : (b.createdAt||0);
-        return tb-ta;
-      });
-      if(!rows.length){
-        historyTableWrap.innerHTML = '<div class="history-empty">아직 지출이 없습니다.</div>';
-        return;
-      }
-      let html = '<table class="history-table"><thead><tr><th>일시</th><th>항목</th><th>카테고리</th><th>결제자</th><th>금액</th><th>메모</th><th>영수증</th></tr></thead><tbody>';
-      for(const r of rows){
-        const dt = r.paidAt || (r.createdAt? new Date(r.createdAt).toISOString().slice(0,16).replace('T',' '):'-');
-        const memo = (r.memo||'').replace(/</g,'&lt;').slice(0,40);
-        const receipt = r.receiptData ? `<a href="${r.receiptData}" target="_blank"><img class="receipt-thumb" src="${r.receiptData}"/></a>` : '-';
-        html += `<tr><td>${dt}</td><td>${r.title||'지출'}</td><td>${r.category||'기타'}</td><td>${r.payer||''}</td><td>${Number(r.amount||0).toLocaleString()} ${r.currency||''}</td><td>${memo}</td><td>${receipt}</td></tr>`;
-      }
-      html += '</tbody></table>';
-      historyTableWrap.innerHTML = html;
-    }
-
-    function render(){
-      renderPersons();
-      renderExpenses();
-      renderFunds();
-      renderSettlement();
-      renderRecentExpenses();
-      renderHistoryTable();
-    }
-
-    async function fetchRateFromApi(){
-      try{
-        $('rateMeta').textContent = '환율 API 조회 중...';
-        $('rateDisplay').value = '조회 중...';
-        const res = await fetch('https://open.er-api.com/v6/latest/JPY');
-        const j = await res.json();
-        const krw = Number(j?.rates?.KRW || 0);
-        if(!krw) throw new Error('KRW rate missing');
-        state.rate = krw;
-        save();
-        $('rateDisplay').value = `1 JPY = ${krw.toFixed(4)} KRW`; 
-        const when = j?.time_last_update_utc || '';
-        $('rateMeta').textContent = `API 반영 완료: 1 JPY = ${krw.toFixed(4)} KRW (${when})`;
-      } catch {
-        $('rateMeta').textContent = '환율 API 조회 실패';
-        $('rateDisplay').value = '환율 조회 실패';
-      }
-    }
-
-    $('addPersonBtn').onclick=()=>{
-      const v=$('personInput').value.trim();
-      if(!v || state.persons.includes(v)) return;
-      state.persons.push(v);
-      $('personInput').value='';
-      save();
+    const STORAGE_KEY = "kyoto-mini-settlement-state-v2";
+    const PENDING_KEY = "kyoto-mini-settlement-pending";
+    const FALLBACK_RATE = 9.0;
+    const DEFAULT_STATE = {
+      participants: ["마네", "시원", "공금"],
+      expenses: [],
+      rate: FALLBACK_RATE,
+      payerSticky: "마네",
+      sid: null,
+      rateUpdatedAt: null
     };
 
-    const expenseEnterSubmit = async () => {
-      const title=$('title').value.trim()||'지출';
-      const category=$('category').value||'기타';
-      const amount=Number($('amount').value||0);
-      const currency=$('currency').value;
-      const payer=$('payer').value;
-      const memo=$('memo').value.trim();
-      const paidAt = $('paidAt').value || nowLocalInput();
-      if(amount<=0 || !payer) return;
+    const TAB_MAIN = "main";
+    const TAB_HISTORY = "history";
+    const TAB_SETTINGS = "settings";
 
-      let receiptData = '';
-      const f = $('receipt').files && $('receipt').files[0];
-      if(f){
-        try { receiptData = await fileToDataURL(f); } catch {}
-      }
-
-      state.expenses.push({title,category,amount,currency,payer,memo,paidAt,receiptData,createdAt:Date.now()});
-      state.settled = {}; // transfer map invalidated by data change
-      $('title').value=''; $('amount').value=''; $('memo').value=''; $('receipt').value='';
-      $('paidAt').value = nowLocalInput();
-      save();
-    };
-
-    $('addExpenseBtn').onclick = expenseEnterSubmit;
-    ['title','amount','memo','paidAt'].forEach(id=>{
-      $(id).addEventListener('keydown',(e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); expenseEnterSubmit(); }});
-    });
-
-    $('addFundBtn').onclick=()=>{
-      const title=$('fundTitle').value.trim()||'공금';
-      const category=$('fundCategory').value||'공금';
-      const amount=Number($('fundAmount').value||0);
-      const currency=$('fundCurrency').value;
-      const payer=$('fundPayer').value;
-      const memo=$('fundMemo').value.trim();
-      if(amount<=0 || !payer) return;
-      state.funds.push({title,category,amount,currency,payer,memo,createdAt:Date.now()});
-      state.settled = {}; // transfer map invalidated by data change
-      $('fundTitle').value=''; $('fundAmount').value=''; $('fundMemo').value='';
-      save();
-    };
-
-    $('fetchRateBtn').onclick=fetchRateFromApi;
-
-    $('copyShareBtn').onclick = async () => {
+    function safeParse(json, fallback) {
       try {
-        setStatus('공유 링크 생성 중...');
-        const body = await createShareUrlOnServer();
-        const url = body.url;
-        const u = new URL(url);
-        currentShareId = u.searchParams.get('sid');
-        lastRemoteFingerprint = fp(state);
-        history.replaceState(null, '', u.toString());
-        startPolling();
-        flushPendingSync();
-
-        try {
-          await navigator.clipboard.writeText(url);
-          setStatus('공유 링크 복사 완료 (실시간 동기화 ON)');
-        } catch {
-          prompt('복사해서 공유하세요:', url);
-        }
+        const parsed = JSON.parse(json);
+        return parsed ?? fallback;
       } catch {
-        setStatus('공유 링크 생성 실패');
+        return fallback;
       }
-    };
-
-    $('loadShareBtn').onclick = async () => { await loadFromLink(); };
-
-    $('resetBtn').onclick = () => {
-      if(!confirm('전체 데이터를 초기화할까요?')) return;
-      state.persons = ['마네'];
-      state.expenses = [];
-      state.funds = [];
-      state.rate = 9.0;
-      state.settled = {};
-      save();
-      setStatus('초기화 완료');
-    };
-
-    
-    function applyTab(tab){
-      const show = (id, on) => { const el = document.getElementById(id); if(el) el.style.display = on ? '' : 'none'; };
-      // default hide all optional panels
-      const isOverview = tab === 'overview';
-      const isExpenses = tab === 'expenses';
-      const isSettings = tab === 'settings';
-
-      show('panelKPI', isOverview);
-      show('panelRecent', isOverview);
-      show('panelSettlement', isOverview || isExpenses);
-
-      show('panelExpense', isExpenses);
-      show('panelHistory', isExpenses);
-
-      show('panelParticipants', isSettings);
-      show('panelRate', isSettings);
-
-      document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
     }
 
-    document.querySelectorAll('.nav-btn').forEach(btn=>{
-      btn.addEventListener('click', ()=>applyTab(btn.dataset.tab));
-    });
+    function parseAmount(input) {
+      const n = Number(String(input || "").replace(/[^0-9]/g, ""));
+      return Number.isFinite(n) ? n : 0;
+    }
 
-    // boot
-    loadFromLink();
-    render();
-    applyTab('overview');
-    fetchRateFromApi();
+    function formatWithComma(input) {
+      const n = parseAmount(input);
+      return n ? n.toLocaleString("ko-KR") : "";
+    }
+
+    function formatDateTime(ts) {
+      const d = new Date(ts);
+      if (Number.isNaN(d.getTime())) return "-";
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      const hh = String(d.getHours()).padStart(2, "0");
+      const mi = String(d.getMinutes()).padStart(2, "0");
+      return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+    }
+
+    function formatTime(ts) {
+      const d = new Date(ts);
+      if (Number.isNaN(d.getTime())) return "--:--";
+      const hh = String(d.getHours()).padStart(2, "0");
+      const mi = String(d.getMinutes()).padStart(2, "0");
+      return `${hh}:${mi}`;
+    }
+
+    function amountLabel(expense, rate) {
+      const amount = Number(expense.amount || 0);
+      if (expense.currency === "JPY") {
+        const krw = Math.round(amount * Number(rate || 0));
+        return `${amount.toLocaleString("ko-KR")} JPY (${krw.toLocaleString("ko-KR")} 원)`;
+      }
+      return `${amount.toLocaleString("ko-KR")} 원`;
+    }
+
+    function isFundAccountName(name) {
+      const s = String(name || "").trim().toLowerCase();
+      return s === "공금" || s === "데이트통장" || s === "데이트 통장" || s === "fund";
+    }
+
+    function calcSettlement(participants, expenses, rate) {
+      const allNames = participants.length ? participants : ["마네", "시원", "공금"];
+      const splitNames = allNames.filter((name) => !isFundAccountName(name));
+      const namesForSplit = splitNames.length ? splitNames : allNames;
+      const balances = Object.fromEntries(allNames.map((n) => [n, 0]));
+      let total = 0;
+      let pending = 0;
+
+      for (const e of expenses) {
+        const amount = Number(e.amount || 0);
+        const krw = e.currency === "JPY" ? amount * Number(rate || 0) : amount;
+        total += krw;
+        if (e.settled) continue;
+        if (isFundAccountName(e.payer)) continue;
+        pending += krw;
+
+        const split = krw / namesForSplit.length;
+        for (const name of namesForSplit) balances[name] -= split;
+        if (balances[e.payer] == null) balances[e.payer] = 0;
+        balances[e.payer] += krw;
+      }
+
+      const debtors = [];
+      const creditors = [];
+      for (const [name, value] of Object.entries(balances)) {
+        if (value < -1) debtors.push([name, -value]);
+        else if (value > 1) creditors.push([name, value]);
+      }
+      debtors.sort((a, b) => b[1] - a[1]);
+      creditors.sort((a, b) => b[1] - a[1]);
+
+      const transfers = [];
+      let i = 0;
+      let j = 0;
+      while (i < debtors.length && j < creditors.length) {
+        const [from, owe] = debtors[i];
+        const [to, recv] = creditors[j];
+        const amount = Math.round(Math.min(owe, recv));
+        if (amount > 0) transfers.push({ from, to, amount });
+        debtors[i][1] -= amount;
+        creditors[j][1] -= amount;
+        if (debtors[i][1] <= 1) i += 1;
+        if (creditors[j][1] <= 1) j += 1;
+      }
+
+      return {
+        totalKrw: Math.round(total),
+        pendingKrw: Math.round(pending),
+        transfers
+      };
+    }
+
+    function normalizeState(raw) {
+      const merged = {
+        ...DEFAULT_STATE,
+        ...raw
+      };
+
+      const participants = Array.isArray(merged.participants)
+        ? merged.participants.map((v) => String(v || "").trim()).filter(Boolean)
+        : DEFAULT_STATE.participants;
+
+      const expenses = Array.isArray(merged.expenses)
+        ? merged.expenses
+            .map((e) => ({
+              id: String(e.id || crypto.randomUUID()),
+              title: String(e.title || "지출"),
+              amount: Number(e.amount || 0),
+              currency: e.currency === "JPY" ? "JPY" : "KRW",
+              payer: String(e.payer || participants[0] || "마네"),
+              createdAt: Number(e.createdAt || Date.now()),
+              settled: Boolean(e.settled)
+            }))
+            .filter((e) => e.amount > 0)
+        : [];
+
+      const uniqueParticipants = Array.from(new Set(participants.length ? participants : DEFAULT_STATE.participants));
+      if (!uniqueParticipants.some((p) => isFundAccountName(p))) uniqueParticipants.push("공금");
+      const payerSticky = uniqueParticipants.includes(merged.payerSticky)
+        ? merged.payerSticky
+        : uniqueParticipants[0];
+
+      return {
+        participants: uniqueParticipants,
+        expenses,
+        rate: Number(merged.rate || FALLBACK_RATE),
+        payerSticky,
+        sid: merged.sid ? String(merged.sid) : null,
+        rateUpdatedAt: merged.rateUpdatedAt ? String(merged.rateUpdatedAt) : null
+      };
+    }
+
+    function App() {
+      const urlSid = new URL(window.location.href).searchParams.get("sid");
+      const localInitial = normalizeState(safeParse(localStorage.getItem(STORAGE_KEY), DEFAULT_STATE));
+      const [state, setState] = useState(() => normalizeState({ ...localInitial, sid: urlSid || localInitial.sid }));
+      const [tab, setTab] = useState(TAB_MAIN);
+      const [title, setTitle] = useState("");
+      const [amountText, setAmountText] = useState("");
+      const [currency, setCurrency] = useState("JPY");
+      const [payer, setPayer] = useState(() => (localInitial.payerSticky || localInitial.participants[0] || "마네"));
+      const [newParticipant, setNewParticipant] = useState("");
+      const [syncLabel, setSyncLabel] = useState("동기화 미연결");
+      const [busy, setBusy] = useState(false);
+      const [lastDeleted, setLastDeleted] = useState(null);
+      const pollRef = useRef(null);
+      const pushTimerRef = useRef(null);
+      const undoTimerRef = useRef(null);
+      const applyingRemoteRef = useRef(false);
+      const lastRemoteFpRef = useRef("");
+
+      const settlement = useMemo(() => calcSettlement(state.participants, state.expenses, state.rate), [state.participants, state.expenses, state.rate]);
+
+      const recentFive = useMemo(
+        () => [...state.expenses].sort((a, b) => b.createdAt - a.createdAt).slice(0, 5),
+        [state.expenses]
+      );
+
+      const fullHistory = useMemo(() => [...state.expenses].sort((a, b) => b.createdAt - a.createdAt), [state.expenses]);
+
+      const mainTransfer = settlement.transfers[0] || null;
+
+      useEffect(() => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      }, [state]);
+
+      useEffect(() => {
+        if (!state.participants.includes(payer)) {
+          setPayer(state.participants[0] || "마네");
+        }
+      }, [state.participants, payer]);
+
+      useEffect(() => {
+        return () => {
+          if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+        };
+      }, []);
+
+      useEffect(() => {
+        if (!state.sid) {
+          setSyncLabel("동기화 미연결");
+          if (pollRef.current) {
+            clearInterval(pollRef.current);
+            pollRef.current = null;
+          }
+          return;
+        }
+
+        setSyncLabel(`실시간 동기화 ON (sid: ${state.sid})`);
+        if (pollRef.current) clearInterval(pollRef.current);
+        pollRef.current = setInterval(() => {
+          pullRemote(state.sid);
+        }, 3500);
+
+        return () => {
+          if (pollRef.current) {
+            clearInterval(pollRef.current);
+            pollRef.current = null;
+          }
+        };
+      }, [state.sid]);
+
+      async function fetchRate() {
+        setBusy(true);
+        try {
+          const res = await fetch("https://open.er-api.com/v6/latest/JPY");
+          const data = await res.json();
+          const krw = Number(data?.rates?.KRW || 0);
+          if (!krw) throw new Error("KRW rate missing");
+
+          setState((prev) => ({
+            ...prev,
+            rate: krw,
+            rateUpdatedAt: data?.time_last_update_utc || new Date().toISOString()
+          }));
+        } catch {
+          alert("환율 조회에 실패했습니다. 네트워크를 확인해 주세요.");
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      function queuePush(nextState) {
+        if (!nextState.sid || applyingRemoteRef.current) return;
+        if (pushTimerRef.current) clearTimeout(pushTimerRef.current);
+        pushTimerRef.current = setTimeout(() => {
+          pushRemote(nextState.sid, nextState);
+        }, 500);
+      }
+
+      async function createOrCopySyncLink() {
+        setBusy(true);
+        try {
+          let sid = state.sid;
+          if (!sid) {
+            const res = await fetch("/api/share", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ state })
+            });
+            if (!res.ok) throw new Error("create failed");
+            const body = await res.json();
+            sid = body.id;
+            setState((prev) => ({ ...prev, sid }));
+            const url = new URL(window.location.href);
+            url.searchParams.set("sid", sid);
+            window.history.replaceState(null, "", url.toString());
+          }
+
+          const share = `${window.location.origin}${window.location.pathname}?sid=${sid}`;
+          await navigator.clipboard.writeText(share);
+          setSyncLabel(`링크 복사됨 (sid: ${sid})`);
+        } catch {
+          alert("동기화 링크 생성/복사에 실패했습니다.");
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      async function pushRemote(sid, nextState) {
+        try {
+          await fetch(`/api/share/${encodeURIComponent(sid)}`, {
+            method: "PUT",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ state: nextState })
+          });
+          localStorage.removeItem(PENDING_KEY);
+        } catch {
+          localStorage.setItem(PENDING_KEY, JSON.stringify(nextState));
+        }
+      }
+
+      async function pullRemote(sid) {
+        if (!sid || applyingRemoteRef.current) return;
+        try {
+          const res = await fetch(`/api/share/${encodeURIComponent(sid)}`);
+          if (!res.ok) return;
+          const body = await res.json();
+          const remoteState = normalizeState(body?.state || DEFAULT_STATE);
+          const fp = JSON.stringify(remoteState);
+          if (fp === lastRemoteFpRef.current) return;
+
+          applyingRemoteRef.current = true;
+          setState((prev) => {
+            const merged = normalizeState({ ...remoteState, sid: prev.sid || sid });
+            lastRemoteFpRef.current = JSON.stringify(merged);
+            return merged;
+          });
+        } catch {
+          // no-op
+        } finally {
+          applyingRemoteRef.current = false;
+        }
+      }
+
+      useEffect(() => {
+        if (!urlSid) return;
+        pullRemote(urlSid);
+      }, [urlSid]);
+
+      useEffect(() => {
+        const pending = safeParse(localStorage.getItem(PENDING_KEY), null);
+        if (!pending || !state.sid || !navigator.onLine) return;
+        pushRemote(state.sid, pending);
+      }, [state.sid]);
+
+      function updateState(updater) {
+        setState((prev) => {
+          const next = normalizeState(typeof updater === "function" ? updater(prev) : updater);
+          queuePush(next);
+          return next;
+        });
+      }
+
+      function onSubmitExpense(e) {
+        e.preventDefault();
+        const parsed = parseAmount(amountText);
+        if (!parsed) return;
+
+        const safePayer = state.participants.includes(payer) ? payer : state.participants[0];
+        if (!safePayer) return;
+
+        updateState((prev) => ({
+          ...prev,
+          payerSticky: safePayer,
+          expenses: [
+            ...prev.expenses,
+            {
+              id: crypto.randomUUID(),
+              title: title.trim() || "지출",
+              amount: parsed,
+              currency,
+              payer: safePayer,
+              createdAt: Date.now(),
+              settled: false
+            }
+          ]
+        }));
+
+        setTitle("");
+        setAmountText("");
+      }
+
+      function removeExpense(id) {
+        const target = state.expenses.find((e) => e.id === id);
+        if (!target) return;
+        if (!confirm(`'${target.title}' 지출을 삭제할까요?`)) return;
+
+        updateState((prev) => ({
+          ...prev,
+          expenses: prev.expenses.filter((e) => e.id !== id)
+        }));
+
+        setLastDeleted(target);
+        if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+        undoTimerRef.current = setTimeout(() => {
+          setLastDeleted(null);
+        }, 5000);
+      }
+
+      function toggleExpenseSettled(id, checked) {
+        updateState((prev) => ({
+          ...prev,
+          expenses: prev.expenses.map((e) => (e.id === id ? { ...e, settled: checked } : e))
+        }));
+      }
+
+      function undoRemoveExpense() {
+        if (!lastDeleted) return;
+        const restoreItem = lastDeleted;
+        if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+        setLastDeleted(null);
+        updateState((prev) => ({
+          ...prev,
+          expenses: [...prev.expenses, restoreItem]
+        }));
+      }
+
+      function addParticipant() {
+        const name = newParticipant.trim();
+        if (!name) return;
+        if (state.participants.includes(name)) {
+          alert("이미 있는 이름입니다.");
+          return;
+        }
+        updateState((prev) => ({
+          ...prev,
+          participants: [...prev.participants, name]
+        }));
+        setNewParticipant("");
+      }
+
+      function renameParticipant(from, to) {
+        const nextName = to.trim();
+        if (!nextName || nextName === from) return;
+        if (state.participants.includes(nextName)) {
+          alert("이미 있는 이름입니다.");
+          return;
+        }
+
+        updateState((prev) => ({
+          ...prev,
+          participants: prev.participants.map((p) => (p === from ? nextName : p)),
+          expenses: prev.expenses.map((e) => ({
+            ...e,
+            payer: e.payer === from ? nextName : e.payer
+          })),
+          payerSticky: prev.payerSticky === from ? nextName : prev.payerSticky
+        }));
+
+        if (payer === from) setPayer(nextName);
+      }
+
+      function deleteParticipant(name) {
+        const nonFundCount = state.participants.filter((p) => !isFundAccountName(p)).length;
+        if (!isFundAccountName(name) && nonFundCount <= 2) {
+          alert("실제 참여자(사람)는 최소 2명 유지해야 합니다.");
+          return;
+        }
+        if (!confirm(`${name} 참여자를 삭제할까요?`)) return;
+
+        updateState((prev) => {
+          const remaining = prev.participants.filter((p) => p !== name);
+          const fallback = remaining[0];
+          return {
+            ...prev,
+            participants: remaining,
+            expenses: prev.expenses.map((e) => (e.payer === name ? { ...e, payer: fallback } : e)),
+            payerSticky: prev.payerSticky === name ? fallback : prev.payerSticky
+          };
+        });
+
+        if (payer === name) {
+          const fallback = state.participants.find((p) => p !== name) || "마네";
+          setPayer(fallback);
+        }
+      }
+
+      async function copyAmount(amount) {
+        try {
+          await navigator.clipboard.writeText(String(amount));
+          alert(`${amount.toLocaleString("ko-KR")} 원 복사됨`);
+        } catch {
+          alert("복사에 실패했습니다.");
+        }
+      }
+
+      function resetAll() {
+        if (!confirm("전체 데이터를 초기화할까요?")) return;
+        const base = normalizeState({ ...DEFAULT_STATE, sid: state.sid });
+        setTitle("");
+        setAmountText("");
+        setCurrency("JPY");
+        setPayer(base.payerSticky);
+        updateState(base);
+      }
+
+      return (
+        React.createElement("div", { className: "app" },
+          React.createElement("header", { className: "header" },
+            React.createElement("div", { className: "title" }, "교토 여행 정산"),
+            React.createElement("div", { className: "subtitle" }, "빠른 입력 · 즉시 정산 · 모바일 전용")
+          ),
+
+          React.createElement("div", { className: "tab-content" },
+          tab === TAB_MAIN && React.createElement("section", { className: "stack" },
+            React.createElement("article", { className: "card settlement-card" },
+              React.createElement("div", { className: "settlement-head" },
+                React.createElement("span", { className: "label" }, "남은 정산")
+              ),
+              mainTransfer
+                ? React.createElement(React.Fragment, null,
+                    React.createElement("div", { className: "settlement-line" }, "아래 지출 내역에서 정산 완료 체크하세요"),
+                    React.createElement("div", {
+                      className: "settlement-amount",
+                      onClick: () => copyAmount(settlement.pendingKrw)
+                    }, `${settlement.pendingKrw.toLocaleString("ko-KR")} KRW`),
+                    React.createElement("div", { className: "settlement-help" }, "남은 정산 총액 · 금액 탭하면 복사됩니다")
+                  )
+                : React.createElement("div", { className: "settlement-line" }, "모든 지출 정산 체크 완료")
+            ),
+
+            React.createElement("article", { className: "card" },
+              React.createElement("div", { className: "label" }, "총 지출"),
+              React.createElement("div", { className: "summary-amount" }, `${settlement.totalKrw.toLocaleString("ko-KR")} KRW`)
+            ),
+
+            React.createElement("article", { className: "card" },
+              React.createElement("div", { className: "label" }, "지출 입력"),
+              React.createElement("form", { className: "form", onSubmit: onSubmitExpense },
+                React.createElement("input", {
+                  className: "field",
+                  placeholder: "항목명",
+                  value: title,
+                  onChange: (e) => setTitle(e.target.value)
+                }),
+                React.createElement("div", { className: "inline" },
+                  React.createElement("input", {
+                    className: "field",
+                    inputMode: "numeric",
+                    placeholder: "금액",
+                    value: amountText,
+                    onChange: (e) => setAmountText(formatWithComma(e.target.value))
+                  }),
+                  React.createElement("select", {
+                    className: "field",
+                    value: currency,
+                    onChange: (e) => setCurrency(e.target.value)
+                  },
+                    React.createElement("option", { value: "JPY" }, "JPY"),
+                    React.createElement("option", { value: "KRW" }, "KRW")
+                  )
+                ),
+                React.createElement("div", { className: "payer-toggle" },
+                  state.participants.map((name) =>
+                    React.createElement("button", {
+                      key: name,
+                      type: "button",
+                      className: payer === name ? "active" : "",
+                      onClick: () => {
+                        setPayer(name);
+                        updateState((prev) => ({ ...prev, payerSticky: name }));
+                      }
+                    }, name)
+                  )
+                ),
+                React.createElement("div", { className: "sync-state" }, "결제자에 공금을 선택하면 분담은 사람(마네/시원)에게만 적용됩니다."),
+                React.createElement("button", { className: "btn", type: "submit" }, "지출 등록")
+              )
+            ),
+
+            React.createElement("article", { className: "card" },
+              React.createElement("div", { className: "label", style: { marginBottom: "8px" } }, "최근 지출 5개"),
+              recentFive.length === 0
+                ? React.createElement("div", { className: "empty" }, "아직 기록이 없습니다")
+                : React.createElement("div", { className: "list" },
+                    recentFive.map((e) =>
+                      React.createElement("div", { key: e.id, className: `row-item ${e.settled ? "settled" : ""}` },
+                        React.createElement("div", { className: "row-top" },
+                          React.createElement("span", { className: "row-time" }, formatTime(e.createdAt)),
+                          React.createElement("span", { className: "row-title" }, e.title),
+                          React.createElement("div", { className: "row-right" },
+                            React.createElement("label", { className: "settle-check" },
+                              React.createElement("input", {
+                                type: "checkbox",
+                                checked: !!e.settled,
+                                onChange: (ev) => toggleExpenseSettled(e.id, ev.target.checked)
+                              }),
+                              "정산"
+                            ),
+                            React.createElement("button", { className: "icon-btn danger", onClick: () => removeExpense(e.id) }, "삭제")
+                          )
+                        ),
+                        React.createElement("div", { className: "row-meta" },
+                          React.createElement("span", null, amountLabel(e, state.rate)),
+                          React.createElement("span", { className: "chip" }, e.payer)
+                        )
+                      )
+                    )
+                  )
+            )
+          ),
+
+          tab === TAB_HISTORY && React.createElement("section", { className: "stack" },
+            React.createElement("article", { className: "card" },
+              React.createElement("div", { className: "label", style: { marginBottom: "8px" } }, "전체 지출 히스토리"),
+              fullHistory.length === 0
+                ? React.createElement("div", { className: "empty" }, "아직 기록이 없습니다")
+                : React.createElement("div", { className: "list" },
+                    fullHistory.map((e) =>
+                      React.createElement("div", { key: e.id, className: `row-item ${e.settled ? "settled" : ""}` },
+                        React.createElement("div", { className: "row-top" },
+                          React.createElement("span", { className: "row-time" }, formatDateTime(e.createdAt)),
+                          React.createElement("span", { className: "row-title" }, e.title),
+                          React.createElement("div", { className: "row-right" },
+                            React.createElement("label", { className: "settle-check" },
+                              React.createElement("input", {
+                                type: "checkbox",
+                                checked: !!e.settled,
+                                onChange: (ev) => toggleExpenseSettled(e.id, ev.target.checked)
+                              }),
+                              "정산"
+                            ),
+                            React.createElement("button", { className: "icon-btn danger", onClick: () => removeExpense(e.id) }, "삭제")
+                          )
+                        ),
+                        React.createElement("div", { className: "row-meta" },
+                          React.createElement("span", null, amountLabel(e, state.rate)),
+                          React.createElement("span", { className: "chip" }, e.payer)
+                        )
+                      )
+                    )
+                  )
+            )
+          ),
+
+          tab === TAB_SETTINGS && React.createElement("section", { className: "stack" },
+            React.createElement("article", { className: "card" },
+              React.createElement("div", { className: "label" }, "참여자 관리"),
+              React.createElement("div", { className: "settings-row" },
+                React.createElement("div", { className: "inline", style: { gridTemplateColumns: "1fr 88px" } },
+                  React.createElement("input", {
+                    className: "field",
+                    placeholder: "이름 추가",
+                    value: newParticipant,
+                    onChange: (e) => setNewParticipant(e.target.value),
+                    onKeyDown: (e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addParticipant();
+                      }
+                    }
+                  }),
+                  React.createElement("button", { className: "btn alt", onClick: addParticipant }, "추가")
+                ),
+                React.createElement("div", { className: "participant-list" },
+                  state.participants.map((name) =>
+                    React.createElement(ParticipantEditor, {
+                      key: name,
+                      name,
+                      onRename: renameParticipant,
+                      onDelete: deleteParticipant
+                    })
+                  )
+                )
+              )
+            ),
+
+            React.createElement("article", { className: "card" },
+              React.createElement("div", { className: "label" }, "환율 설정"),
+              React.createElement("div", { className: "settings-row" },
+                React.createElement("div", { className: "field", style: { fontWeight: 800, background: "#f8f4ee" } }, `1 JPY = ${Number(state.rate || 0).toFixed(4)} KRW`),
+                React.createElement("button", { className: "btn alt", onClick: fetchRate, disabled: busy }, busy ? "조회 중..." : "새로고침"),
+                React.createElement("div", { className: "sync-state" }, state.rateUpdatedAt ? `적용 시각: ${state.rateUpdatedAt}` : "아직 API 갱신 전")
+              )
+            ),
+
+            React.createElement("article", { className: "card" },
+              React.createElement("div", { className: "label" }, "실시간 동기화"),
+              React.createElement("div", { className: "settings-row" },
+                React.createElement("button", { className: "btn alt", onClick: createOrCopySyncLink, disabled: busy }, "동기화 링크 생성/복사"),
+                React.createElement("div", { className: "sync-state" }, syncLabel)
+              )
+            ),
+
+            React.createElement("article", { className: "card" },
+              React.createElement("button", { className: "btn danger", onClick: resetAll }, "전체 초기화")
+            )
+          )),
+
+          React.createElement("nav", { className: "bottom-nav", "aria-label": "하단 탭" },
+            React.createElement("div", { className: "bottom-nav-inner" },
+              React.createElement("button", { className: `tab-btn ${tab === TAB_MAIN ? "active" : ""}`, onClick: () => setTab(TAB_MAIN) }, "메인"),
+              React.createElement("button", { className: `tab-btn ${tab === TAB_HISTORY ? "active" : ""}`, onClick: () => setTab(TAB_HISTORY) }, "히스토리"),
+              React.createElement("button", { className: `tab-btn ${tab === TAB_SETTINGS ? "active" : ""}`, onClick: () => setTab(TAB_SETTINGS) }, "설정")
+            )
+          ),
+          lastDeleted && React.createElement("div", { className: "undo-toast" },
+            React.createElement("span", null, `'${lastDeleted.title}' 삭제됨`),
+            React.createElement("button", { onClick: undoRemoveExpense }, "되돌리기")
+          )
+        )
+      );
+    }
+
+    function ParticipantEditor({ name, onRename, onDelete }) {
+      const [value, setValue] = useState(name);
+
+      useEffect(() => {
+        setValue(name);
+      }, [name]);
+
+      return (
+        React.createElement("div", { className: "participant-row" },
+          React.createElement("input", {
+            className: "field",
+            value,
+            onChange: (e) => setValue(e.target.value),
+            onBlur: () => onRename(name, value),
+            onKeyDown: (e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                onRename(name, value);
+                e.currentTarget.blur();
+              }
+            }
+          }),
+          React.createElement("div", { className: "participant-actions" },
+            React.createElement("button", { className: "icon-btn danger", onClick: () => onDelete(name) }, "삭제")
+          )
+        )
+      );
+    }
+
+    createRoot(document.getElementById("root")).render(React.createElement(App));
   </script>
 </body>
 </html>
