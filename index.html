@@ -3,6 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#f4efe7" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
   <title>교토 여행 초미니 정산</title>
   <style>
     :root {
@@ -149,6 +154,22 @@
       margin-top: 6px;
     }
 
+    .summary-grid {
+      margin-top: 6px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .summary-col {
+      padding: 8px 0;
+    }
+
+    .summary-col + .summary-col {
+      border-left: 1px solid var(--line);
+      padding-left: 10px;
+    }
+
     .form {
       display: grid;
       gap: 8px;
@@ -221,6 +242,56 @@
       gap: 8px;
     }
 
+    .note-form {
+      display: grid;
+      gap: 8px;
+    }
+
+    .note-input {
+      min-height: 84px;
+      resize: vertical;
+    }
+
+    .note-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .note-item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .note-text {
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .note-text a {
+      color: var(--brand);
+      font-weight: 700;
+      text-decoration: underline;
+    }
+
+    .note-meta {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .note-actions {
+      display: inline-flex;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
     .row-item {
       border: 1px solid var(--line);
       border-radius: 12px;
@@ -247,7 +318,7 @@
     .row-time {
       font-size: 12px;
       color: var(--muted);
-      min-width: 52px;
+      min-width: 88px;
     }
 
     .row-title {
@@ -274,6 +345,13 @@
       font-size: 12px;
       color: var(--muted);
       white-space: nowrap;
+    }
+
+    .settle-check input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--brand);
+      cursor: pointer;
     }
 
     .row-item.settled {
@@ -351,7 +429,7 @@
 
     .bottom-nav-inner {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 6px;
       background: var(--tab-bg);
       border: 1px solid var(--line);
@@ -379,6 +457,32 @@
       display: grid;
       gap: 8px;
       margin-top: 8px;
+    }
+
+    .history-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .history-controls {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .history-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    .history-two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
     }
 
     .sync-state {
@@ -422,6 +526,12 @@
         font-size: 24px;
       }
     }
+
+    @media (max-width: 420px) {
+      .history-two-col {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -437,6 +547,7 @@
     const DEFAULT_STATE = {
       participants: ["마네", "시원", "공금"],
       expenses: [],
+      notes: [],
       rate: FALLBACK_RATE,
       payerSticky: "마네",
       sid: null,
@@ -445,6 +556,7 @@
 
     const TAB_MAIN = "main";
     const TAB_HISTORY = "history";
+    const TAB_NOTES = "notes";
     const TAB_SETTINGS = "settings";
 
     function safeParse(json, fallback) {
@@ -477,19 +589,42 @@
       return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
     }
 
-    function formatTime(ts) {
+    function formatShortDateTime(ts) {
       const d = new Date(ts);
-      if (Number.isNaN(d.getTime())) return "--:--";
+      if (Number.isNaN(d.getTime())) return "--/-- --:--";
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
       const hh = String(d.getHours()).padStart(2, "0");
       const mi = String(d.getMinutes()).padStart(2, "0");
-      return `${hh}:${mi}`;
+      return `${mm}/${dd} ${hh}:${mi}`;
+    }
+
+    function splitTextWithLinks(text) {
+      const source = String(text || "");
+      const regex = /(https?:\/\/[^\s]+)/g;
+      const parts = [];
+      let lastIndex = 0;
+      let match;
+      while ((match = regex.exec(source)) !== null) {
+        const start = match.index;
+        const end = regex.lastIndex;
+        if (start > lastIndex) {
+          parts.push({ type: "text", value: source.slice(lastIndex, start) });
+        }
+        parts.push({ type: "link", value: match[0] });
+        lastIndex = end;
+      }
+      if (lastIndex < source.length) {
+        parts.push({ type: "text", value: source.slice(lastIndex) });
+      }
+      return parts.length ? parts : [{ type: "text", value: source }];
     }
 
     function amountLabel(expense, rate) {
       const amount = Number(expense.amount || 0);
       if (expense.currency === "JPY") {
         const krw = Math.round(amount * Number(rate || 0));
-        return `${amount.toLocaleString("ko-KR")} JPY (${krw.toLocaleString("ko-KR")} 원)`;
+        return `${amount.toLocaleString("ko-KR")} 엔 (${krw.toLocaleString("ko-KR")} 원)`;
       }
       return `${amount.toLocaleString("ko-KR")} 원`;
     }
@@ -504,16 +639,21 @@
       const splitNames = allNames.filter((name) => !isFundAccountName(name));
       const namesForSplit = splitNames.length ? splitNames : allNames;
       const balances = Object.fromEntries(allNames.map((n) => [n, 0]));
+      const pendingPaidBy = Object.fromEntries(namesForSplit.map((n) => [n, 0]));
       let total = 0;
+      let fund = 0;
       let pending = 0;
 
       for (const e of expenses) {
         const amount = Number(e.amount || 0);
         const krw = e.currency === "JPY" ? amount * Number(rate || 0) : amount;
         total += krw;
+        if (isFundAccountName(e.payer)) fund += krw;
         if (e.settled) continue;
         if (isFundAccountName(e.payer)) continue;
         pending += krw;
+        if (pendingPaidBy[e.payer] == null) pendingPaidBy[e.payer] = 0;
+        pendingPaidBy[e.payer] += krw;
 
         const split = krw / namesForSplit.length;
         for (const name of namesForSplit) balances[name] -= split;
@@ -544,10 +684,31 @@
         if (creditors[j][1] <= 1) j += 1;
       }
 
+      let directionalSplit = null;
+      if (namesForSplit.length === 2) {
+        const [nameA, nameB] = namesForSplit;
+        const paidByA = Number(pendingPaidBy[nameA] || 0);
+        const paidByB = Number(pendingPaidBy[nameB] || 0);
+        const aToB = Math.round(paidByB / 2);
+        const bToA = Math.round(paidByA / 2);
+        const diff = bToA - aToB;
+        directionalSplit = {
+          nameA,
+          nameB,
+          aToB,
+          bToA,
+          netFrom: diff > 0 ? nameB : nameA,
+          netTo: diff > 0 ? nameA : nameB,
+          netAmount: Math.abs(diff)
+        };
+      }
+
       return {
         totalKrw: Math.round(total),
+        fundKrw: Math.round(fund),
         pendingKrw: Math.round(pending),
-        transfers
+        transfers,
+        directionalSplit
       };
     }
 
@@ -575,6 +736,17 @@
             .filter((e) => e.amount > 0)
         : [];
 
+      const notes = Array.isArray(merged.notes)
+        ? merged.notes
+            .map((n) => ({
+              id: String(n.id || crypto.randomUUID()),
+              text: String(n.text || "").trim(),
+              createdAt: Number(n.createdAt || Date.now()),
+              updatedAt: Number(n.updatedAt || n.createdAt || Date.now())
+            }))
+            .filter((n) => n.text.length > 0)
+        : [];
+
       const uniqueParticipants = Array.from(new Set(participants.length ? participants : DEFAULT_STATE.participants));
       if (!uniqueParticipants.some((p) => isFundAccountName(p))) uniqueParticipants.push("공금");
       const payerSticky = uniqueParticipants.includes(merged.payerSticky)
@@ -584,6 +756,7 @@
       return {
         participants: uniqueParticipants,
         expenses,
+        notes,
         rate: Number(merged.rate || FALLBACK_RATE),
         payerSticky,
         sid: merged.sid ? String(merged.sid) : null,
@@ -604,6 +777,15 @@
       const [syncLabel, setSyncLabel] = useState("동기화 미연결");
       const [busy, setBusy] = useState(false);
       const [lastDeleted, setLastDeleted] = useState(null);
+      const [historySort, setHistorySort] = useState("newest");
+      const [historySettledFilter, setHistorySettledFilter] = useState("all");
+      const [historyPayerFilter, setHistoryPayerFilter] = useState("all");
+      const [historyCurrencyFilter, setHistoryCurrencyFilter] = useState("all");
+      const [historyQuery, setHistoryQuery] = useState("");
+      const [historyControlsOpen, setHistoryControlsOpen] = useState(false);
+      const [noteText, setNoteText] = useState("");
+      const [editingNoteId, setEditingNoteId] = useState(null);
+      const [editingNoteText, setEditingNoteText] = useState("");
       const pollRef = useRef(null);
       const pushTimerRef = useRef(null);
       const undoTimerRef = useRef(null);
@@ -617,9 +799,56 @@
         [state.expenses]
       );
 
-      const fullHistory = useMemo(() => [...state.expenses].sort((a, b) => b.createdAt - a.createdAt), [state.expenses]);
+      const fullHistory = useMemo(() => [...state.expenses], [state.expenses]);
 
-      const mainTransfer = settlement.transfers[0] || null;
+      const filteredHistory = useMemo(() => {
+        const query = historyQuery.trim().toLowerCase();
+        const toKrw = (expense) => {
+          const amount = Number(expense.amount || 0);
+          return expense.currency === "JPY" ? amount * Number(state.rate || 0) : amount;
+        };
+
+        const list = fullHistory
+          .filter((e) => {
+            if (historySettledFilter === "settled") return !!e.settled;
+            if (historySettledFilter === "unsettled") return !e.settled;
+            return true;
+          })
+          .filter((e) => (historyPayerFilter === "all" ? true : e.payer === historyPayerFilter))
+          .filter((e) => (historyCurrencyFilter === "all" ? true : e.currency === historyCurrencyFilter))
+          .filter((e) => {
+            if (!query) return true;
+            return String(e.title || "").toLowerCase().includes(query);
+          });
+
+        list.sort((a, b) => {
+          if (historySort === "oldest") return a.createdAt - b.createdAt;
+          if (historySort === "amountDesc") return toKrw(b) - toKrw(a);
+          if (historySort === "amountAsc") return toKrw(a) - toKrw(b);
+          return b.createdAt - a.createdAt;
+        });
+
+        return list;
+      }, [fullHistory, historySort, historySettledFilter, historyPayerFilter, historyCurrencyFilter, historyQuery, state.rate]);
+
+      const activeHistoryFilterCount = [
+        historySort !== "newest",
+        historySettledFilter !== "all",
+        historyPayerFilter !== "all",
+        historyCurrencyFilter !== "all",
+        historyQuery.trim() !== ""
+      ].filter(Boolean).length;
+
+      function resetHistoryFilters() {
+        setHistorySort("newest");
+        setHistorySettledFilter("all");
+        setHistoryPayerFilter("all");
+        setHistoryCurrencyFilter("all");
+        setHistoryQuery("");
+      }
+
+      const hasPendingSettlement = settlement.pendingKrw > 0;
+      const directionalSplit = settlement.directionalSplit;
 
       useEffect(() => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -837,6 +1066,59 @@
         }));
       }
 
+      function addNote() {
+        const text = noteText.trim();
+        if (!text) return;
+        const now = Date.now();
+        updateState((prev) => ({
+          ...prev,
+          notes: [
+            {
+              id: crypto.randomUUID(),
+              text,
+              createdAt: now,
+              updatedAt: now
+            },
+            ...prev.notes
+          ]
+        }));
+        setNoteText("");
+      }
+
+      function startEditNote(note) {
+        setEditingNoteId(note.id);
+        setEditingNoteText(note.text);
+      }
+
+      function cancelEditNote() {
+        setEditingNoteId(null);
+        setEditingNoteText("");
+      }
+
+      function saveEditNote(noteId) {
+        const nextText = editingNoteText.trim();
+        if (!nextText) {
+          alert("메모 내용을 입력해 주세요.");
+          return;
+        }
+        updateState((prev) => ({
+          ...prev,
+          notes: prev.notes.map((n) => (n.id === noteId ? { ...n, text: nextText, updatedAt: Date.now() } : n))
+        }));
+        cancelEditNote();
+      }
+
+      function deleteNote(noteId) {
+        const target = state.notes.find((n) => n.id === noteId);
+        if (!target) return;
+        if (!confirm("이 메모를 삭제할까요?")) return;
+        updateState((prev) => ({
+          ...prev,
+          notes: prev.notes.filter((n) => n.id !== noteId)
+        }));
+        if (editingNoteId === noteId) cancelEditNote();
+      }
+
       function addParticipant() {
         const name = newParticipant.trim();
         if (!name) return;
@@ -929,21 +1211,38 @@
               React.createElement("div", { className: "settlement-head" },
                 React.createElement("span", { className: "label" }, "남은 정산")
               ),
-              mainTransfer
+              hasPendingSettlement
                 ? React.createElement(React.Fragment, null,
-                    React.createElement("div", { className: "settlement-line" }, "아래 지출 내역에서 정산 완료 체크하세요"),
+                    directionalSplit && React.createElement(React.Fragment, null,
+                      React.createElement("div", { className: "settlement-line" }, `${directionalSplit.nameA} → ${directionalSplit.nameB}: ${directionalSplit.aToB.toLocaleString("ko-KR")} 원`),
+                      React.createElement("div", { className: "settlement-line" }, `${directionalSplit.nameB} → ${directionalSplit.nameA}: ${directionalSplit.bToA.toLocaleString("ko-KR")} 원`)
+                    ),
                     React.createElement("div", {
                       className: "settlement-amount",
-                      onClick: () => copyAmount(settlement.pendingKrw)
-                    }, `${settlement.pendingKrw.toLocaleString("ko-KR")} KRW`),
-                    React.createElement("div", { className: "settlement-help" }, "남은 정산 총액 · 금액 탭하면 복사됩니다")
+                      onClick: () => copyAmount(directionalSplit ? directionalSplit.netAmount : settlement.pendingKrw)
+                    }, directionalSplit
+                      ? directionalSplit.netAmount > 0
+                        ? `${directionalSplit.netFrom} → ${directionalSplit.netTo} ${directionalSplit.netAmount.toLocaleString("ko-KR")} 원`
+                        : "최종 송금 없음 (0원)"
+                      : `${settlement.pendingKrw.toLocaleString("ko-KR")} 원`),
+                    React.createElement("div", { className: "settlement-help" }, directionalSplit
+                      ? "양방향 절반 금액 + 최종 상계 결과 · 금액 탭하면 복사됩니다"
+                      : "남은 정산 총액 · 금액 탭하면 복사됩니다")
                   )
                 : React.createElement("div", { className: "settlement-line" }, "모든 지출 정산 체크 완료")
             ),
 
             React.createElement("article", { className: "card" },
-              React.createElement("div", { className: "label" }, "총 지출"),
-              React.createElement("div", { className: "summary-amount" }, `${settlement.totalKrw.toLocaleString("ko-KR")} KRW`)
+              React.createElement("div", { className: "summary-grid" },
+                React.createElement("div", { className: "summary-col" },
+                  React.createElement("div", { className: "label" }, "총 지출"),
+                  React.createElement("div", { className: "summary-amount" }, `${settlement.totalKrw.toLocaleString("ko-KR")} 원`)
+                ),
+                React.createElement("div", { className: "summary-col" },
+                  React.createElement("div", { className: "label" }, "공금 지출"),
+                  React.createElement("div", { className: "summary-amount" }, `${settlement.fundKrw.toLocaleString("ko-KR")} 원`)
+                )
+              )
             ),
 
             React.createElement("article", { className: "card" },
@@ -968,8 +1267,8 @@
                     value: currency,
                     onChange: (e) => setCurrency(e.target.value)
                   },
-                    React.createElement("option", { value: "JPY" }, "JPY"),
-                    React.createElement("option", { value: "KRW" }, "KRW")
+                    React.createElement("option", { value: "JPY" }, "엔"),
+                    React.createElement("option", { value: "KRW" }, "원")
                   )
                 ),
                 React.createElement("div", { className: "payer-toggle" },
@@ -998,7 +1297,7 @@
                     recentFive.map((e) =>
                       React.createElement("div", { key: e.id, className: `row-item ${e.settled ? "settled" : ""}` },
                         React.createElement("div", { className: "row-top" },
-                          React.createElement("span", { className: "row-time" }, formatTime(e.createdAt)),
+                          React.createElement("span", { className: "row-time" }, formatShortDateTime(e.createdAt)),
                           React.createElement("span", { className: "row-title" }, e.title),
                           React.createElement("div", { className: "row-right" },
                             React.createElement("label", { className: "settle-check" },
@@ -1024,11 +1323,86 @@
 
           tab === TAB_HISTORY && React.createElement("section", { className: "stack" },
             React.createElement("article", { className: "card" },
-              React.createElement("div", { className: "label", style: { marginBottom: "8px" } }, "전체 지출 히스토리"),
+              React.createElement("div", { className: "history-head" },
+                React.createElement("div", { className: "label" }, "전체 지출 히스토리"),
+                React.createElement("button", {
+                  className: "icon-btn",
+                  type: "button",
+                  onClick: () => setHistoryControlsOpen((prev) => !prev)
+                }, historyControlsOpen
+                  ? "필터 접기"
+                  : activeHistoryFilterCount > 0
+                    ? `☰ 필터/정렬 (${activeHistoryFilterCount})`
+                    : "☰ 필터/정렬")
+              ),
+              historyControlsOpen && React.createElement("div", { className: "history-controls" },
+                React.createElement("div", { className: "history-two-col" },
+                  React.createElement("select", {
+                    className: "field",
+                    value: historySort,
+                    onChange: (e) => setHistorySort(e.target.value)
+                  },
+                    React.createElement("option", { value: "newest" }, "정렬: 최신순"),
+                    React.createElement("option", { value: "oldest" }, "정렬: 오래된순"),
+                    React.createElement("option", { value: "amountDesc" }, "정렬: 금액 큰순"),
+                    React.createElement("option", { value: "amountAsc" }, "정렬: 금액 작은순")
+                  ),
+                  React.createElement("select", {
+                    className: "field",
+                    value: historySettledFilter,
+                    onChange: (e) => setHistorySettledFilter(e.target.value)
+                  },
+                    React.createElement("option", { value: "all" }, "정산: 전체"),
+                    React.createElement("option", { value: "unsettled" }, "정산: 미완료"),
+                    React.createElement("option", { value: "settled" }, "정산: 완료")
+                  )
+                ),
+                React.createElement("div", { className: "history-two-col" },
+                  React.createElement("select", {
+                    className: "field",
+                    value: historyPayerFilter,
+                    onChange: (e) => setHistoryPayerFilter(e.target.value)
+                  },
+                    React.createElement("option", { value: "all" }, "결제자: 전체"),
+                    state.participants.map((name) =>
+                      React.createElement("option", { key: name, value: name }, `결제자: ${name}`)
+                    )
+                  ),
+                  React.createElement("select", {
+                    className: "field",
+                    value: historyCurrencyFilter,
+                    onChange: (e) => setHistoryCurrencyFilter(e.target.value)
+                  },
+                    React.createElement("option", { value: "all" }, "통화: 전체"),
+                    React.createElement("option", { value: "JPY" }, "통화: 엔"),
+                    React.createElement("option", { value: "KRW" }, "통화: 원")
+                  )
+                ),
+                React.createElement("input", {
+                  className: "field",
+                  placeholder: "항목명 검색",
+                  value: historyQuery,
+                  onChange: (e) => setHistoryQuery(e.target.value)
+                }),
+                React.createElement("div", { className: "history-actions" },
+                  React.createElement("button", {
+                    className: "icon-btn",
+                    type: "button",
+                    onClick: resetHistoryFilters
+                  }, "필터 초기화"),
+                  React.createElement("button", {
+                    className: "icon-btn",
+                    type: "button",
+                    onClick: () => setHistoryControlsOpen(false)
+                  }, "닫기")
+                )
+              ),
               fullHistory.length === 0
                 ? React.createElement("div", { className: "empty" }, "아직 기록이 없습니다")
+                : filteredHistory.length === 0
+                  ? React.createElement("div", { className: "empty" }, "조건에 맞는 기록이 없습니다")
                 : React.createElement("div", { className: "list" },
-                    fullHistory.map((e) =>
+                    filteredHistory.map((e) =>
                       React.createElement("div", { key: e.id, className: `row-item ${e.settled ? "settled" : ""}` },
                         React.createElement("div", { className: "row-top" },
                           React.createElement("span", { className: "row-time" }, formatDateTime(e.createdAt)),
@@ -1051,6 +1425,64 @@
                         )
                       )
                     )
+                  )
+            )
+          ),
+
+          tab === TAB_NOTES && React.createElement("section", { className: "stack" },
+            React.createElement("article", { className: "card" },
+              React.createElement("div", { className: "label", style: { marginBottom: "8px" } }, "메모"),
+              React.createElement("div", { className: "sync-state", style: { marginBottom: "8px" } }, "일반 텍스트/링크를 함께 저장할 수 있습니다."),
+              React.createElement("div", { className: "note-form" },
+                React.createElement("textarea", {
+                  className: "field note-input",
+                  placeholder: "예) https://guest-ui.west-qr.com/#/ 이 링크는 하루카 티켓 볼 수 있음",
+                  value: noteText,
+                  onChange: (e) => setNoteText(e.target.value)
+                }),
+                React.createElement("button", { className: "btn", type: "button", onClick: addNote }, "메모 추가")
+              ),
+              state.notes.length === 0
+                ? React.createElement("div", { className: "empty" }, "아직 메모가 없습니다")
+                : React.createElement("div", { className: "note-list" },
+                    state.notes
+                      .slice()
+                      .sort((a, b) => b.createdAt - a.createdAt)
+                      .map((note) => {
+                        const editing = editingNoteId === note.id;
+                        return React.createElement("div", { key: note.id, className: "note-item" },
+                          editing
+                            ? React.createElement("textarea", {
+                                className: "field note-input",
+                                value: editingNoteText,
+                                onChange: (e) => setEditingNoteText(e.target.value)
+                              })
+                            : React.createElement("div", { className: "note-text" },
+                                splitTextWithLinks(note.text).map((part, idx) =>
+                                  part.type === "link"
+                                    ? React.createElement("a", {
+                                        key: `${note.id}-part-${idx}`,
+                                        href: part.value,
+                                        target: "_blank",
+                                        rel: "noreferrer noopener"
+                                      }, part.value)
+                                    : React.createElement("span", { key: `${note.id}-part-${idx}` }, part.value)
+                                )
+                              ),
+                          React.createElement("div", { className: "note-meta" },
+                            `작성: ${formatDateTime(note.createdAt)} · 수정: ${formatDateTime(note.updatedAt)}`
+                          ),
+                          React.createElement("div", { className: "note-actions" },
+                            editing
+                              ? React.createElement(React.Fragment, null,
+                                  React.createElement("button", { className: "icon-btn", type: "button", onClick: () => saveEditNote(note.id) }, "저장"),
+                                  React.createElement("button", { className: "icon-btn", type: "button", onClick: cancelEditNote }, "취소")
+                                )
+                              : React.createElement("button", { className: "icon-btn", type: "button", onClick: () => startEditNote(note) }, "수정"),
+                            React.createElement("button", { className: "icon-btn danger", type: "button", onClick: () => deleteNote(note.id) }, "삭제")
+                          )
+                        );
+                      })
                   )
             )
           ),
@@ -1090,7 +1522,7 @@
             React.createElement("article", { className: "card" },
               React.createElement("div", { className: "label" }, "환율 설정"),
               React.createElement("div", { className: "settings-row" },
-                React.createElement("div", { className: "field", style: { fontWeight: 800, background: "#f8f4ee" } }, `1 JPY = ${Number(state.rate || 0).toFixed(4)} KRW`),
+                React.createElement("div", { className: "field", style: { fontWeight: 800, background: "#f8f4ee" } }, `1 엔 = ${Number(state.rate || 0).toFixed(4)} 원`),
                 React.createElement("button", { className: "btn alt", onClick: fetchRate, disabled: busy }, busy ? "조회 중..." : "새로고침"),
                 React.createElement("div", { className: "sync-state" }, state.rateUpdatedAt ? `적용 시각: ${state.rateUpdatedAt}` : "아직 API 갱신 전")
               )
@@ -1113,6 +1545,7 @@
             React.createElement("div", { className: "bottom-nav-inner" },
               React.createElement("button", { className: `tab-btn ${tab === TAB_MAIN ? "active" : ""}`, onClick: () => setTab(TAB_MAIN) }, "메인"),
               React.createElement("button", { className: `tab-btn ${tab === TAB_HISTORY ? "active" : ""}`, onClick: () => setTab(TAB_HISTORY) }, "히스토리"),
+              React.createElement("button", { className: `tab-btn ${tab === TAB_NOTES ? "active" : ""}`, onClick: () => setTab(TAB_NOTES) }, "메모"),
               React.createElement("button", { className: `tab-btn ${tab === TAB_SETTINGS ? "active" : ""}`, onClick: () => setTab(TAB_SETTINGS) }, "설정")
             )
           ),
@@ -1151,6 +1584,14 @@
           )
         )
       );
+    }
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/service-worker.js").catch(() => {
+          // no-op
+        });
+      });
     }
 
     createRoot(document.getElementById("root")).render(React.createElement(App));

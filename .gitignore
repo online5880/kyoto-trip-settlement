@@ -1,0 +1,7 @@
+node_modules/
+test-results/
+.wrangler/
+playwright-report/
+.env
+.env.*
+!.env.example
