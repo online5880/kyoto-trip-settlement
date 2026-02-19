@@ -56,7 +56,10 @@
       padding: 12px;
     }
     .kpi .label { font-size: 12px; color: var(--muted); }
-    .kpi .value { font-size: 22px; font-weight: 800; margin-top: 2px; }
+    .kpi .value { font-size: 20px; font-weight: 800; margin-top: 2px; }
+    #kpiPerHead { font-size: 24px; }
+    #kpiTotal { font-size: 18px; }
+    #kpiNet { font-size: 18px; }
 
     .grid { margin-top: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch; flex: 1 1 auto; min-height: 0; overflow: hidden; }
     @media (max-width: 900px) { .grid { grid-template-columns: 1fr; overflow: visible; } .kpi-grid { grid-template-columns: 1fr 1fr; } body{overflow:auto;} .wrap{height:auto;} .card{height:auto;} }
@@ -144,6 +147,21 @@
     .ok-dot { width:8px; height:8px; border-radius:50%; background:#7A816F; display:inline-block; margin-right:5px; }
     .warn-dot { width:8px; height:8px; border-radius:50%; background:#B06A52; display:inline-block; margin-right:5px; }
 
+    .recent-wrap { margin-top: 8px; border: 1px solid #DDD7CD; background: #FCF9F3; }
+    .recent-head { padding: 8px 10px; font-size: 12px; color: #756E67; border-bottom: 1px solid #DDD7CD; }
+    .recent-table { width: 100%; border-collapse: collapse; }
+    .recent-table th, .recent-table td { font-size: 12px; padding: 8px 10px; border-bottom: 1px solid #E6E0D7; text-align: left; }
+    .recent-table th { color: #756E67; font-weight: 600; }
+    .recent-empty { padding: 10px; color: #756E67; font-size: 12px; }
+
+    .transfer-card { border: 1px solid #DDD7CD; background: #F7F3EC; padding: 10px; }
+    .transfer-amount { font-size: 26px; font-weight: 900; color: #B06A52; white-space: nowrap; }
+    .transfer-main { font-size: 15px; font-weight: 700; color: #35312E; }
+    .transfer-sub { font-size: 12px; color: #756E67; }
+
+    #addExpenseBtn { background: #B06A52 !important; color: #FCF9F3; }
+
+
     .fund-section { display:none !important; }
   </style>
 </head>
@@ -165,6 +183,12 @@
         <div class="kpi"><div class="label">공금 포함 합계</div><div id="kpiNet" class="value">0 KRW</div></div>
         <div class="kpi"><div class="label">1인당 부담</div><div id="kpiPerHead" class="value">0 KRW</div></div>
         <div class="kpi"><div class="label">정산 완료</div><div id="kpiDone" class="value">0%</div></div>
+      </div>
+    </section>
+
+      <div class="recent-wrap">
+        <div class="recent-head">최근 지출 5개</div>
+        <div id="recentExpenses"></div>
       </div>
     </section>
 
@@ -191,7 +215,7 @@
             <option value="공금">공금</option>
             <option value="기타">기타</option>
           </select>
-          <input id="amount" type="number" min="0" placeholder="금액" />
+          <input id="amount" type="number" inputmode="decimal" min="0" placeholder="금액" />
           <select id="currency"><option value="JPY">JPY</option><option value="KRW">KRW</option></select>
         </div>
         <div class="row" style="margin-top:8px;">
@@ -211,7 +235,7 @@
             <option value="공금">공금</option>
             <option value="예비비">예비비</option>
           </select>
-          <input id="fundAmount" type="number" min="0" placeholder="금액" />
+          <input id="fundAmount" type="number" inputmode="decimal" min="0" placeholder="금액" />
           <select id="fundCurrency"><option value="JPY">JPY</option><option value="KRW">KRW</option></select>
         </div>
         <div class="row" style="margin-top:8px;">
@@ -257,6 +281,7 @@
     const $ = (id) => document.getElementById(id);
     const statusEl = $('status');
     const syncStateEl = $('syncState');
+    const recentExpensesEl = $('recentExpenses');
 
     let currentShareId = null;
     let isRemoteApplying = false;
@@ -511,11 +536,28 @@
       $('kpiDone').textContent = `${ratio}%`;
     }
 
+    function renderRecentExpenses(){
+      const rows = [...state.expenses].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,5);
+      if(!rows.length){
+        recentExpensesEl.innerHTML = '<div class="recent-empty">아직 지출이 없습니다.</div>';
+        return;
+      }
+      let html = '<table class="recent-table"><thead><tr><th>시간</th><th>항목</th><th>카테고리</th><th>금액</th><th>결제자</th></tr></thead><tbody>';
+      rows.forEach(r=>{
+        const dt = r.createdAt ? new Date(r.createdAt) : null;
+        const tm = dt ? `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}` : '-';
+        html += `<tr><td>${tm}</td><td>${r.title||'지출'}</td><td>${r.category||'기타'}</td><td>${Number(r.amount||0).toLocaleString()} ${r.currency||''}</td><td>${r.payer||''}</td></tr>`;
+      });
+      html += '</tbody></table>';
+      recentExpensesEl.innerHTML = html;
+    }
+
     function render(){
       renderPersons();
       renderExpenses();
       renderFunds();
       renderSettlement();
+      renderRecentExpenses();
     }
 
     async function fetchRateFromApi(){
@@ -545,7 +587,7 @@
       save();
     };
 
-    $('addExpenseBtn').onclick=()=>{
+    const expenseEnterSubmit = () => {
       const title=$('title').value.trim()||'지출';
       const category=$('category').value||'기타';
       const amount=Number($('amount').value||0);
@@ -558,6 +600,11 @@
       $('title').value=''; $('amount').value=''; $('memo').value='';
       save();
     };
+
+    $('addExpenseBtn').onclick = expenseEnterSubmit;
+    ['title','amount','memo'].forEach(id=>{
+      $(id).addEventListener('keydown',(e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); expenseEnterSubmit(); }});
+    });
 
     $('addFundBtn').onclick=()=>{
       const title=$('fundTitle').value.trim()||'공금';
