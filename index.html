@@ -8,7 +8,7 @@
     :root {
       --bg1: #f2f6ff;
       --bg2: #fff3f7;
-      --card: rgba(255,255,255,0.86);
+      --card: rgba(255,255,255,0.9);
       --line: #dfe5ff;
       --text: #1d2340;
       --muted: #6b7397;
@@ -32,14 +32,14 @@
     .header {
       background: var(--card);
       border: 1px solid var(--line);
-      border-radius: 18px;
+      border-radius: 16px;
       padding: 12px;
       backdrop-filter: blur(6px);
       box-shadow: 0 10px 30px rgba(43, 66, 178, 0.08);
     }
     h1 { margin: 0 0 6px; font-size: 28px; }
     .muted { color: var(--muted); font-size: 13px; }
-    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
 
     .grid { margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: stretch; }
     @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
@@ -52,7 +52,7 @@
       box-shadow: 0 8px 20px rgba(43, 66, 178, 0.06);
       display: flex;
       flex-direction: column;
-      min-height: 230px;
+      min-height: 240px;
     }
     .card h3 { margin: 0 0 10px; }
 
@@ -72,7 +72,7 @@
       background: #fff;
       color: var(--text);
     }
-    textarea { min-height: 68px; resize: vertical; }
+    textarea { min-height: 60px; resize: vertical; }
 
     button {
       border: 0;
@@ -114,29 +114,23 @@
     }
     .sub { color: var(--muted); font-size: 12px; }
 
-    .totals {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 10px;
-    }
-    .total-box {
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 10px;
-      background: #fff;
-    }
+    .totals { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+    .total-box { border: 1px solid var(--line); border-radius: 10px; padding: 10px; background: #fff; }
+
+    .ok-dot { width:8px; height:8px; border-radius:50%; background:#29b36f; display:inline-block; margin-right:5px; }
+    .warn-dot { width:8px; height:8px; border-radius:50%; background:#d89d00; display:inline-block; margin-right:5px; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <section class="header">
       <h1>교토 여행 정산 ✈️💴</h1>
-      <div class="muted">Cloudflare D1 서버 저장만 사용합니다. (로컬 저장 없음)</div>
+      <div class="muted">Cloudflare D1 서버 저장 전용 + 같은 링크(`sid`) 실시간 동기화</div>
       <div class="toolbar">
         <button class="alt" id="copyShareBtn">공유 링크 생성/복사 (DB)</button>
         <button class="alt" id="loadShareBtn">링크 데이터 불러오기 (DB)</button>
         <button class="danger" id="resetBtn">전체 초기화</button>
+        <span id="syncState" class="muted"><span class="warn-dot"></span>미연결</span>
         <span id="status" class="muted"></span>
       </div>
     </section>
@@ -164,39 +158,52 @@
             <option value="기타">기타</option>
           </select>
           <input id="amount" type="number" min="0" placeholder="금액" />
-          <select id="currency">
-            <option value="JPY">JPY</option>
-            <option value="KRW">KRW</option>
-          </select>
+          <select id="currency"><option value="JPY">JPY</option><option value="KRW">KRW</option></select>
         </div>
         <div class="row" style="margin-top:8px;">
           <select id="payer"></select>
           <button id="addExpenseBtn">지출 등록</button>
         </div>
-        <div style="margin-top:8px;">
-          <textarea id="memo" placeholder="영수증 메모 (예: 돈키호테, 카드결제, 3명 분할)"></textarea>
-        </div>
+        <div style="margin-top:8px;"><textarea id="memo" placeholder="영수증 메모"></textarea></div>
         <div class="sub" style="margin-top:6px;">기본 분배: 참여자 전체 균등</div>
         <div id="expenses" class="list"></div>
       </section>
 
       <section class="card">
+        <h3>공금 추가</h3>
+        <div class="row4">
+          <input id="fundTitle" placeholder="공금명 (예: 여행 공금)" />
+          <select id="fundCategory">
+            <option value="공금">공금</option>
+            <option value="예비비">예비비</option>
+          </select>
+          <input id="fundAmount" type="number" min="0" placeholder="금액" />
+          <select id="fundCurrency"><option value="JPY">JPY</option><option value="KRW">KRW</option></select>
+        </div>
+        <div class="row" style="margin-top:8px;">
+          <select id="fundPayer"></select>
+          <button id="addFundBtn" class="ok">공금 등록</button>
+        </div>
+        <div style="margin-top:8px;"><textarea id="fundMemo" placeholder="공금 메모"></textarea></div>
+        <div class="sub" style="margin-top:6px;">공금은 전체가 함께 부담한 선납금으로 계산됩니다.</div>
+        <div id="funds" class="list"></div>
+      </section>
+
+      <section class="card">
         <h3>환율 설정</h3>
-        <div class="row">
+        <div class="row3">
           <input id="jpyToKrw" type="number" step="0.01" value="9.0" />
           <button id="saveRateBtn" class="ok">환율 저장</button>
+          <button id="fetchRateBtn" class="alt">API로 가져오기</button>
         </div>
         <div class="sub" style="margin-top:8px;">1 JPY = ? KRW</div>
+        <div class="sub" id="rateMeta" style="margin-top:4px;"></div>
 
         <div class="totals">
-          <div class="total-box">
-            <div class="sub">총 지출 (KRW 환산)</div>
-            <strong id="totalKrw">0 KRW</strong>
-          </div>
-          <div class="total-box">
-            <div class="sub">1인당 부담</div>
-            <strong id="perHeadKrw">0 KRW</strong>
-          </div>
+          <div class="total-box"><div class="sub">총 지출 (KRW)</div><strong id="totalKrw">0 KRW</strong></div>
+          <div class="total-box"><div class="sub">공금 총액 (KRW)</div><strong id="totalFundKrw">0 KRW</strong></div>
+          <div class="total-box"><div class="sub">정산 대상 총액 (KRW)</div><strong id="netKrw">0 KRW</strong></div>
+          <div class="total-box"><div class="sub">1인당 부담</div><strong id="perHeadKrw">0 KRW</strong></div>
         </div>
       </section>
 
@@ -211,16 +218,12 @@
   </div>
 
   <script>
-    const defaultState = {
-      persons: ['마네'],
-      expenses: [],
-      rate: 9.0
-    };
-
+    const defaultState = { persons: ['마네'], expenses: [], funds: [], rate: 9.0 };
     const state = structuredClone(defaultState);
 
     const $ = (id) => document.getElementById(id);
     const statusEl = $('status');
+    const syncStateEl = $('syncState');
 
     let currentShareId = null;
     let isRemoteApplying = false;
@@ -228,295 +231,301 @@
     let pollTimer = null;
     let lastRemoteFingerprint = '';
 
-    function fingerprint(obj) {
-      return JSON.stringify(obj);
-    }
+    const fp = (obj) => JSON.stringify(obj);
+    const toKrw = (amount, c) => c === 'KRW' ? amount : amount * Number(state.rate || 0);
 
-
-    function setStatus(msg) {
+    function setStatus(msg){
       statusEl.textContent = msg;
-      setTimeout(() => {
-        if (statusEl.textContent === msg) statusEl.textContent = '';
-      }, 1800);
+      setTimeout(()=>{ if(statusEl.textContent===msg) statusEl.textContent=''; }, 2000);
     }
 
-    function save() {
-            render();
+    function setSyncState(connected){
+      if(connected){
+        syncStateEl.innerHTML = '<span class="ok-dot"></span>실시간 동기화 ON';
+      } else {
+        syncStateEl.innerHTML = '<span class="warn-dot"></span>미연결';
+      }
+    }
+
+    function save(){
+      render();
       scheduleSync();
     }
 
-    function toKrw(amount, c) {
-      return c === 'KRW' ? amount : amount * Number(state.rate || 0);
-    }
-
-    function b64urlEncode(str) {
-      return btoa(unescape(encodeURIComponent(str))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
-    }
-    function b64urlDecode(str) {
-      str = str.replace(/-/g, '+').replace(/_/g, '/');
-      while (str.length % 4) str += '=';
-      return decodeURIComponent(escape(atob(str)));
-    }
-
-    async function createShareUrlOnServer() {
+    async function createShareUrlOnServer(){
       const res = await fetch('/api/share', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ state }),
+        method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({state})
       });
-      if (!res.ok) throw new Error('공유 저장 실패');
-      const body = await res.json();
-      return body.url;
+      if(!res.ok) throw new Error('share create failed');
+      return await res.json();
     }
 
-    async function loadFromLink() {
-      const u = new URL(location.href);
-      const sid = u.searchParams.get('sid');
-      const s = u.searchParams.get('s'); // legacy support
-
-      if (sid) {
-        try {
-          currentShareId = sid;
-          const res = await fetch(`/api/share/${encodeURIComponent(sid)}`);
-          if (!res.ok) throw new Error('not found');
-          const body = await res.json();
-          const obj = body.state;
-          if (!obj || !Array.isArray(obj.persons) || !Array.isArray(obj.expenses)) throw new Error('bad data');
-          state.persons = obj.persons;
-          state.expenses = obj.expenses;
-          state.rate = Number(obj.rate || 9.0);
-          save();
-          lastRemoteFingerprint = fingerprint(state);
-          startPolling();
-          setStatus('DB 공유 링크 데이터 불러오기 완료 (실시간 동기화 ON)');
-          return true;
-        } catch {
-          setStatus('DB 공유 링크 데이터 불러오기 실패');
-          return false;
-        }
-      }
-
-      if (s) {
-        // legacy mode: encoded state in URL
-        try {
-          const obj = JSON.parse(b64urlDecode(s));
-          if (!obj || !Array.isArray(obj.persons) || !Array.isArray(obj.expenses)) throw new Error('bad data');
-          state.persons = obj.persons;
-          state.expenses = obj.expenses;
-          state.rate = Number(obj.rate || 9.0);
-          save();
-          setStatus('링크 데이터 불러오기 완료(legacy)');
-          return true;
-        } catch {
-          setStatus('링크 데이터 파싱 실패');
-          return false;
-        }
-      }
-
-      return false;
-    }
-
-
-    async function updateShareOnServer() {
-      if (!currentShareId || isRemoteApplying) return;
-      try {
+    async function updateShareOnServer(){
+      if(!currentShareId || isRemoteApplying) return;
+      try{
         await fetch(`/api/share/${encodeURIComponent(currentShareId)}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ state }),
+          method:'PUT', headers:{'content-type':'application/json'}, body: JSON.stringify({state})
         });
-      } catch {
-        // ignore background sync errors
-      }
+      } catch {}
     }
 
-    function scheduleSync() {
-      if (!currentShareId || isRemoteApplying) return;
+    function scheduleSync(){
+      if(!currentShareId || isRemoteApplying) return;
       clearTimeout(syncTimer);
-      syncTimer = setTimeout(() => {
-        updateShareOnServer();
-      }, 700);
+      syncTimer=setTimeout(updateShareOnServer, 600);
     }
 
-    async function pollRemote() {
-      if (!currentShareId || isRemoteApplying) return;
-      try {
+    async function pollRemote(){
+      if(!currentShareId || isRemoteApplying) return;
+      try{
         const res = await fetch(`/api/share/${encodeURIComponent(currentShareId)}`);
-        if (!res.ok) return;
+        if(!res.ok) return;
         const body = await res.json();
         const remote = body?.state;
-        if (!remote) return;
-
-        const f = fingerprint(remote);
-        if (!lastRemoteFingerprint) {
-          lastRemoteFingerprint = f;
-          return;
-        }
-        if (f === lastRemoteFingerprint) return;
+        if(!remote) return;
+        const remoteFp = fp(remote);
+        if(!lastRemoteFingerprint){ lastRemoteFingerprint = remoteFp; return; }
+        if(remoteFp === lastRemoteFingerprint) return;
 
         isRemoteApplying = true;
         state.persons = Array.isArray(remote.persons) ? remote.persons : ['마네'];
         state.expenses = Array.isArray(remote.expenses) ? remote.expenses : [];
+        state.funds = Array.isArray(remote.funds) ? remote.funds : [];
         state.rate = Number(remote.rate || 9.0);
-                render();
-        setStatus('다른 사용자 변경사항 동기화됨');
+        render();
+        lastRemoteFingerprint = remoteFp;
+        setStatus('다른 사용자 변경사항 반영됨');
+      } catch {} finally {
         isRemoteApplying = false;
-
-        lastRemoteFingerprint = f;
-      } catch {
-        // ignore poll errors
       }
     }
 
-    function startPolling() {
-      if (pollTimer) clearInterval(pollTimer);
-      if (!currentShareId) return;
+    function startPolling(){
+      if(pollTimer) clearInterval(pollTimer);
+      if(!currentShareId) return;
+      setSyncState(true);
       pollTimer = setInterval(pollRemote, 4000);
     }
 
-    function renderPersons() {
-      const box = $('persons'); box.innerHTML = '';
-      state.persons.forEach((p, i) => {
-        const div = document.createElement('div'); div.className = 'item';
-        div.innerHTML = `<span>${p}</span><button class="danger" data-i="${i}">삭제</button>`;
-        div.querySelector('button').onclick = () => {
-          if (state.persons.length <= 1) return;
-          state.persons.splice(i, 1);
-          state.expenses = state.expenses.filter(e => e.payer !== p);
+    async function loadFromLink(){
+      const u = new URL(location.href);
+      const sid = u.searchParams.get('sid');
+      if(!sid){ setSyncState(false); return false; }
+      try{
+        currentShareId = sid;
+        const res = await fetch(`/api/share/${encodeURIComponent(sid)}`);
+        if(!res.ok) throw new Error('not found');
+        const body = await res.json();
+        const obj = body.state;
+        state.persons = Array.isArray(obj.persons) ? obj.persons : ['마네'];
+        state.expenses = Array.isArray(obj.expenses) ? obj.expenses : [];
+        state.funds = Array.isArray(obj.funds) ? obj.funds : [];
+        state.rate = Number(obj.rate || 9.0);
+        lastRemoteFingerprint = fp(state);
+        render();
+        startPolling();
+        setStatus('DB 데이터 불러오기 완료');
+        return true;
+      } catch {
+        setStatus('DB 링크 불러오기 실패');
+        return false;
+      }
+    }
+
+    function renderPersons(){
+      const box = $('persons'); box.innerHTML='';
+      state.persons.forEach((p,i)=>{
+        const div=document.createElement('div'); div.className='item';
+        div.innerHTML = `<span>${p}</span><button class="danger">삭제</button>`;
+        div.querySelector('button').onclick = ()=>{
+          if(state.persons.length<=1) return;
+          state.persons.splice(i,1);
+          state.expenses = state.expenses.filter(e=>e.payer!==p);
+          state.funds = state.funds.filter(e=>e.payer!==p);
           save();
         };
         box.appendChild(div);
       });
 
-      const payer = $('payer'); payer.innerHTML = '';
-      state.persons.forEach(p => {
-        const o = document.createElement('option');
-        o.value = p; o.textContent = p;
-        payer.appendChild(o);
+      const payerSel = ['payer','fundPayer'];
+      payerSel.forEach(id=>{
+        const el=$(id); el.innerHTML='';
+        state.persons.forEach(p=>{
+          const o=document.createElement('option'); o.value=p; o.textContent=p; el.appendChild(o);
+        });
       });
     }
 
-    function renderExpenses() {
-      const box = $('expenses'); box.innerHTML = '';
-      state.expenses.forEach((e, i) => {
-        const krw = toKrw(Number(e.amount || 0), e.currency);
-        const div = document.createElement('div'); div.className = 'item';
-        div.innerHTML = `
-          <div class="item-main">
-            <div>
-              <span class="pill">${e.category || '기타'}</span>
-              <span class="pill">${e.payer}</span>
-              ${e.title || '지출'}
-            </div>
-            <div class="sub">${Number(e.amount).toLocaleString()} ${e.currency} (≈ ${Math.round(krw).toLocaleString()} KRW)</div>
-            ${e.memo ? `<div class="sub">🧾 ${e.memo}</div>` : ''}
-          </div>
-          <button class="danger">삭제</button>
-        `;
-        div.querySelector('button').onclick = () => { state.expenses.splice(i, 1); save(); };
+    function renderExpenses(){
+      const box=$('expenses'); box.innerHTML='';
+      state.expenses.forEach((e,i)=>{
+        const krw = toKrw(Number(e.amount||0), e.currency);
+        const div=document.createElement('div'); div.className='item';
+        div.innerHTML = `<div class="item-main">
+          <div><span class="pill">${e.category||'기타'}</span><span class="pill">${e.payer}</span>${e.title||'지출'}</div>
+          <div class="sub">${Number(e.amount).toLocaleString()} ${e.currency} (≈ ${Math.round(krw).toLocaleString()} KRW)</div>
+          ${e.memo ? `<div class="sub">🧾 ${e.memo}</div>` : ''}
+        </div><button class="danger">삭제</button>`;
+        div.querySelector('button').onclick=()=>{ state.expenses.splice(i,1); save(); };
         box.appendChild(div);
       });
     }
 
-    function calc() {
-      const n = Math.max(1, state.persons.length);
-      const bal = Object.fromEntries(state.persons.map(p => [p, 0]));
-      let total = 0;
-
-      for (const e of state.expenses) {
-        const krw = toKrw(Number(e.amount || 0), e.currency);
-        total += krw;
-        const share = krw / n;
-        bal[e.payer] += krw;
-        for (const p of state.persons) bal[p] -= share;
-      }
-      return { bal, total, perHead: total / n };
+    function renderFunds(){
+      const box=$('funds'); box.innerHTML='';
+      state.funds.forEach((f,i)=>{
+        const krw = toKrw(Number(f.amount||0), f.currency);
+        const div=document.createElement('div'); div.className='item';
+        div.innerHTML = `<div class="item-main">
+          <div><span class="pill">${f.category||'공금'}</span><span class="pill">${f.payer}</span>${f.title||'공금'}</div>
+          <div class="sub">${Number(f.amount).toLocaleString()} ${f.currency} (≈ ${Math.round(krw).toLocaleString()} KRW)</div>
+          ${f.memo ? `<div class="sub">🧾 ${f.memo}</div>` : ''}
+        </div><button class="danger">삭제</button>`;
+        div.querySelector('button').onclick=()=>{ state.funds.splice(i,1); save(); };
+        box.appendChild(div);
+      });
     }
 
-    function renderSettlement() {
-      const { bal, total, perHead } = calc();
-      $('totalKrw').textContent = `${Math.round(total).toLocaleString()} KRW`;
+    function calc(){
+      const n=Math.max(1,state.persons.length);
+      const bal=Object.fromEntries(state.persons.map(p=>[p,0]));
+      let totalExpense=0, totalFund=0;
+
+      for(const e of state.expenses){
+        const krw = toKrw(Number(e.amount||0), e.currency);
+        totalExpense += krw;
+        const share=krw/n;
+        bal[e.payer]+=krw;
+        state.persons.forEach(p=>bal[p]-=share);
+      }
+
+      // 공금도 선납금으로 동일 분배 로직 적용
+      for(const f of state.funds){
+        const krw = toKrw(Number(f.amount||0), f.currency);
+        totalFund += krw;
+        const share=krw/n;
+        bal[f.payer]+=krw;
+        state.persons.forEach(p=>bal[p]-=share);
+      }
+
+      return {bal,totalExpense,totalFund,net:totalExpense+totalFund,perHead:(totalExpense+totalFund)/n};
+    }
+
+    function renderSettlement(){
+      const {bal,totalExpense,totalFund,net,perHead}=calc();
+      $('totalKrw').textContent = `${Math.round(totalExpense).toLocaleString()} KRW`;
+      $('totalFundKrw').textContent = `${Math.round(totalFund).toLocaleString()} KRW`;
+      $('netKrw').textContent = `${Math.round(net).toLocaleString()} KRW`;
       $('perHeadKrw').textContent = `${Math.round(perHead).toLocaleString()} KRW`;
 
-      const sum = $('summary'); sum.innerHTML = '';
-      Object.entries(bal).forEach(([p, v]) => {
-        const d = document.createElement('div'); d.className = 'item';
-        d.innerHTML = `<span>${p}</span><strong>${Math.round(v).toLocaleString()} KRW</strong>`;
+      const sum=$('summary'); sum.innerHTML='';
+      Object.entries(bal).forEach(([p,v])=>{
+        const d=document.createElement('div'); d.className='item';
+        d.innerHTML=`<span>${p}</span><strong>${Math.round(v).toLocaleString()} KRW</strong>`;
         sum.appendChild(d);
       });
 
-      const debtors = [], creditors = [];
-      for (const [p, v] of Object.entries(bal)) {
-        if (v < -1) debtors.push([p, -v]);
-        if (v > 1) creditors.push([p, v]);
+      const debtors=[], creditors=[];
+      for(const [p,v] of Object.entries(bal)){
+        if(v<-1) debtors.push([p,-v]);
+        if(v>1) creditors.push([p,v]);
       }
-      debtors.sort((a, b) => b[1] - a[1]);
-      creditors.sort((a, b) => b[1] - a[1]);
+      debtors.sort((a,b)=>b[1]-a[1]);
+      creditors.sort((a,b)=>b[1]-a[1]);
 
-      const t = $('transfers'); t.innerHTML = '';
-      let i = 0, j = 0;
-      while (i < debtors.length && j < creditors.length) {
-        const [dp, da] = debtors[i];
-        const [cp, ca] = creditors[j];
-        const m = Math.min(da, ca);
-        const d = document.createElement('div'); d.className = 'item';
-        d.innerHTML = `<span>${dp} → ${cp}</span><strong>${Math.round(m).toLocaleString()} KRW</strong>`;
+      const t=$('transfers'); t.innerHTML='';
+      let i=0,j=0;
+      while(i<debtors.length && j<creditors.length){
+        const [dp,da]=debtors[i], [cp,ca]=creditors[j];
+        const m=Math.min(da,ca);
+        const d=document.createElement('div'); d.className='item';
+        d.innerHTML=`<span>${dp} → ${cp}</span><strong>${Math.round(m).toLocaleString()} KRW</strong>`;
         t.appendChild(d);
-        debtors[i][1] -= m; creditors[j][1] -= m;
-        if (debtors[i][1] <= 1) i++;
-        if (creditors[j][1] <= 1) j++;
+        debtors[i][1]-=m; creditors[j][1]-=m;
+        if(debtors[i][1]<=1) i++;
+        if(creditors[j][1]<=1) j++;
       }
     }
 
-    function render() {
+    function render(){
       $('jpyToKrw').value = state.rate;
       renderPersons();
       renderExpenses();
+      renderFunds();
       renderSettlement();
     }
 
-    $('addPersonBtn').onclick = () => {
-      const v = $('personInput').value.trim();
-      if (!v || state.persons.includes(v)) return;
+    async function fetchRateFromApi(){
+      try{
+        $('rateMeta').textContent = '환율 API 조회 중...';
+        const res = await fetch('https://open.er-api.com/v6/latest/JPY');
+        const j = await res.json();
+        const krw = Number(j?.rates?.KRW || 0);
+        if(!krw) throw new Error('KRW rate missing');
+        state.rate = krw;
+        save();
+        const when = j?.time_last_update_utc || '';
+        $('rateMeta').textContent = `API 반영 완료: 1 JPY = ${krw.toFixed(4)} KRW (${when})`;
+      } catch {
+        $('rateMeta').textContent = '환율 API 조회 실패. 수동 입력 사용';
+      }
+    }
+
+    $('addPersonBtn').onclick=()=>{
+      const v=$('personInput').value.trim();
+      if(!v || state.persons.includes(v)) return;
       state.persons.push(v);
-      $('personInput').value = '';
+      $('personInput').value='';
       save();
     };
 
-    $('addExpenseBtn').onclick = () => {
-      const title = $('title').value.trim() || '지출';
-      const category = $('category').value || '기타';
-      const amount = Number($('amount').value || 0);
-      const currency = $('currency').value;
-      const payer = $('payer').value;
-      const memo = $('memo').value.trim();
-      if (amount <= 0 || !payer) return;
-      state.expenses.push({ title, category, amount, currency, payer, memo, createdAt: Date.now() });
-      $('title').value = '';
-      $('amount').value = '';
-      $('memo').value = '';
+    $('addExpenseBtn').onclick=()=>{
+      const title=$('title').value.trim()||'지출';
+      const category=$('category').value||'기타';
+      const amount=Number($('amount').value||0);
+      const currency=$('currency').value;
+      const payer=$('payer').value;
+      const memo=$('memo').value.trim();
+      if(amount<=0 || !payer) return;
+      state.expenses.push({title,category,amount,currency,payer,memo,createdAt:Date.now()});
+      $('title').value=''; $('amount').value=''; $('memo').value='';
       save();
     };
 
-    $('saveRateBtn').onclick = () => {
-      const r = Number($('jpyToKrw').value || 0);
-      if (r > 0) { state.rate = r; save(); }
+    $('addFundBtn').onclick=()=>{
+      const title=$('fundTitle').value.trim()||'공금';
+      const category=$('fundCategory').value||'공금';
+      const amount=Number($('fundAmount').value||0);
+      const currency=$('fundCurrency').value;
+      const payer=$('fundPayer').value;
+      const memo=$('fundMemo').value.trim();
+      if(amount<=0 || !payer) return;
+      state.funds.push({title,category,amount,currency,payer,memo,createdAt:Date.now()});
+      $('fundTitle').value=''; $('fundAmount').value=''; $('fundMemo').value='';
+      save();
     };
+
+    $('saveRateBtn').onclick=()=>{
+      const r=Number($('jpyToKrw').value||0);
+      if(r>0){ state.rate=r; save(); $('rateMeta').textContent='수동 환율 저장됨'; }
+    };
+
+    $('fetchRateBtn').onclick=fetchRateFromApi;
 
     $('copyShareBtn').onclick = async () => {
       try {
         setStatus('공유 링크 생성 중...');
-        const url = await createShareUrlOnServer();
-        try {
-          const u = new URL(url);
-          currentShareId = u.searchParams.get('sid');
-          lastRemoteFingerprint = fingerprint(state);
-          history.replaceState(null, '', u.toString());
-          startPolling();
-        } catch {}
+        const body = await createShareUrlOnServer();
+        const url = body.url;
+        const u = new URL(url);
+        currentShareId = u.searchParams.get('sid');
+        lastRemoteFingerprint = fp(state);
+        history.replaceState(null, '', u.toString());
+        startPolling();
+
         try {
           await navigator.clipboard.writeText(url);
-          setStatus('공유 링크 복사 완료 (DB, 실시간 동기화 ON)');
+          setStatus('공유 링크 복사 완료 (실시간 동기화 ON)');
         } catch {
           prompt('복사해서 공유하세요:', url);
         }
@@ -528,20 +537,19 @@
     $('loadShareBtn').onclick = async () => { await loadFromLink(); };
 
     $('resetBtn').onclick = () => {
-      if (!confirm('전체 데이터를 초기화할까요?')) return;
+      if(!confirm('전체 데이터를 초기화할까요?')) return;
       state.persons = ['마네'];
       state.expenses = [];
+      state.funds = [];
       state.rate = 9.0;
       save();
       setStatus('초기화 완료');
     };
 
+    // boot
     loadFromLink();
     render();
-    if (new URL(location.href).searchParams.get('sid')) {
-      currentShareId = new URL(location.href).searchParams.get('sid');
-      startPolling();
-    }
+    fetchRateFromApi();
   </script>
 </body>
 </html>
