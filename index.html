@@ -5,174 +5,427 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>교토 여행 정산</title>
   <style>
-    :root{--bg:#f7f8ff;--card:#fff;--line:#e3e6ff;--text:#1d2340;--muted:#6b7397;--primary:#4a67ff}
-    *{box-sizing:border-box} body{margin:0;font-family:Inter,Apple SD Gothic Neo,Noto Sans KR,sans-serif;background:var(--bg);color:var(--text)}
-    .wrap{max-width:980px;margin:0 auto;padding:16px}
-    h1{font-size:26px;margin:8px 0 14px}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
-    .muted{color:var(--muted);font-size:13px}
-    input,select,button{font:inherit}
-    input,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff}
-    button{padding:10px 12px;border:0;border-radius:10px;background:var(--primary);color:#fff;font-weight:700;cursor:pointer}
-    button.alt{background:#eef1ff;color:#243279}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-    .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-    .list{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px;max-height:260px;overflow:auto}
-    .item{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid #f0f2ff}
-    .pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#eef1ff;color:#2d3fa5;font-size:12px}
-    .danger{background:#e85b5b}
-    @media (max-width:760px){.grid{grid-template-columns:1fr}}
+    :root {
+      --bg1: #f2f6ff;
+      --bg2: #fff3f7;
+      --card: rgba(255,255,255,0.86);
+      --line: #dfe5ff;
+      --text: #1d2340;
+      --muted: #6b7397;
+      --primary: #4a67ff;
+      --primary2: #6e86ff;
+      --danger: #e45c5c;
+      --ok: #25a56a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--text);
+      font-family: Inter, Apple SD Gothic Neo, Noto Sans KR, sans-serif;
+      background:
+        radial-gradient(circle at 10% 8%, #dce7ff 0, transparent 30%),
+        radial-gradient(circle at 90% 2%, #ffd9e9 0, transparent 27%),
+        linear-gradient(150deg, var(--bg1) 0%, var(--bg2) 100%);
+      min-height: 100vh;
+    }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 16px; }
+    .header {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 10px 30px rgba(43, 66, 178, 0.08);
+    }
+    h1 { margin: 0 0 6px; font-size: 28px; }
+    .muted { color: var(--muted); font-size: 13px; }
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+
+    .grid { margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 8px 20px rgba(43, 66, 178, 0.06);
+    }
+    .card h3 { margin: 0 0 10px; }
+
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .row4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; }
+    @media (max-width: 760px) {
+      .row, .row3, .row4 { grid-template-columns: 1fr; }
+    }
+
+    input, select, textarea, button { font: inherit; }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--text);
+    }
+    textarea { min-height: 68px; resize: vertical; }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #fff;
+      background: linear-gradient(120deg, var(--primary), var(--primary2));
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button.alt { background: #eef2ff; color: #2a3a92; border: 1px solid var(--line); }
+    button.danger { background: var(--danger); }
+    button.ok { background: var(--ok); }
+
+    .list {
+      margin-top: 10px;
+      border-top: 1px dashed var(--line);
+      padding-top: 10px;
+      max-height: 330px;
+      overflow: auto;
+    }
+    .item {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid #eef1ff;
+    }
+    .item-main { display: flex; flex-direction: column; gap: 3px; }
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #edf1ff;
+      color: #2f43a5;
+      font-size: 12px;
+      margin-right: 5px;
+    }
+    .sub { color: var(--muted); font-size: 12px; }
+
+    .totals {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .total-box {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      background: #fff;
+    }
   </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>교토 여행 정산 💸</h1>
-  <div class="muted">여행 경비를 입력하면 누가 누구에게 얼마 보내야 하는지 자동 계산합니다.</div>
-
-  <div class="grid" style="margin-top:12px;">
-    <section class="card">
-      <h3>참여자</h3>
-      <div class="row">
-        <input id="personInput" placeholder="이름 입력" />
-        <button id="addPersonBtn">추가</button>
+  <div class="wrap">
+    <section class="header">
+      <h1>교토 여행 정산 ✈️💴</h1>
+      <div class="muted">브라우저 로컬 DB(localStorage)에 자동 저장됩니다. 공유 링크 생성 시 같은 데이터로 팀원과 공유 가능.</div>
+      <div class="toolbar">
+        <button class="alt" id="copyShareBtn">공유 링크 복사</button>
+        <button class="alt" id="loadShareBtn">링크 데이터 불러오기</button>
+        <button class="danger" id="resetBtn">전체 초기화</button>
+        <span id="status" class="muted"></span>
       </div>
-      <div id="persons" class="list"></div>
     </section>
 
-    <section class="card">
-      <h3>지출 추가</h3>
-      <div class="row3">
-        <input id="title" placeholder="항목(예: 점심)" />
-        <input id="amount" type="number" min="0" placeholder="금액" />
-        <select id="currency"><option value="JPY">JPY</option><option value="KRW">KRW</option></select>
-      </div>
-      <div class="row" style="margin-top:8px;">
-        <select id="payer"></select>
-        <button id="addExpenseBtn">지출 등록</button>
-      </div>
-      <div class="muted" style="margin-top:8px;">분배는 참여자 전체 균등분할</div>
-      <div id="expenses" class="list"></div>
-    </section>
+    <div class="grid">
+      <section class="card">
+        <h3>참여자</h3>
+        <div class="row">
+          <input id="personInput" placeholder="이름 입력 (예: 마네)" />
+          <button id="addPersonBtn">참여자 추가</button>
+        </div>
+        <div id="persons" class="list"></div>
+      </section>
 
-    <section class="card">
-      <h3>환율 설정</h3>
-      <div class="row">
-        <input id="jpyToKrw" type="number" step="0.01" value="9.0" />
-        <button id="saveRateBtn" class="alt">저장</button>
-      </div>
-      <div class="muted" style="margin-top:8px;">1 JPY = ? KRW</div>
-    </section>
+      <section class="card">
+        <h3>지출 추가</h3>
+        <div class="row4">
+          <input id="title" placeholder="항목명 (예: 점심)" />
+          <select id="category">
+            <option value="식비">식비</option>
+            <option value="교통">교통</option>
+            <option value="숙소">숙소</option>
+            <option value="관광">관광</option>
+            <option value="쇼핑">쇼핑</option>
+            <option value="기타">기타</option>
+          </select>
+          <input id="amount" type="number" min="0" placeholder="금액" />
+          <select id="currency">
+            <option value="JPY">JPY</option>
+            <option value="KRW">KRW</option>
+          </select>
+        </div>
+        <div class="row" style="margin-top:8px;">
+          <select id="payer"></select>
+          <button id="addExpenseBtn">지출 등록</button>
+        </div>
+        <div style="margin-top:8px;">
+          <textarea id="memo" placeholder="영수증 메모 (예: 돈키호테, 카드결제, 3명 분할)"></textarea>
+        </div>
+        <div class="sub" style="margin-top:6px;">기본 분배: 참여자 전체 균등</div>
+        <div id="expenses" class="list"></div>
+      </section>
 
-    <section class="card">
-      <h3>정산 결과</h3>
-      <div id="summary" class="list"></div>
-      <div id="transfers" class="list"></div>
-    </section>
+      <section class="card">
+        <h3>환율 설정</h3>
+        <div class="row">
+          <input id="jpyToKrw" type="number" step="0.01" value="9.0" />
+          <button id="saveRateBtn" class="ok">환율 저장</button>
+        </div>
+        <div class="sub" style="margin-top:8px;">1 JPY = ? KRW</div>
+
+        <div class="totals">
+          <div class="total-box">
+            <div class="sub">총 지출 (KRW 환산)</div>
+            <strong id="totalKrw">0 KRW</strong>
+          </div>
+          <div class="total-box">
+            <div class="sub">1인당 부담</div>
+            <strong id="perHeadKrw">0 KRW</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>정산 결과</h3>
+        <div class="sub">+는 받을 돈 / -는 보낼 돈</div>
+        <div id="summary" class="list"></div>
+        <div class="sub" style="margin-top:8px; font-weight:700;">송금 가이드</div>
+        <div id="transfers" class="list"></div>
+      </section>
+    </div>
   </div>
-</div>
 
-<script>
-const KEY='kyoto-settlement-v1';
-const state=JSON.parse(localStorage.getItem(KEY)||'{"persons":["마네"],"expenses":[],"rate":9.0}');
+  <script>
+    const KEY = 'kyoto-settlement-v2';
+    const defaultState = {
+      persons: ['마네'],
+      expenses: [],
+      rate: 9.0
+    };
 
-const $=id=>document.getElementById(id);
+    const state = (() => {
+      const s = localStorage.getItem(KEY);
+      if (!s) return structuredClone(defaultState);
+      try { return JSON.parse(s); } catch { return structuredClone(defaultState); }
+    })();
 
-function save(){localStorage.setItem(KEY,JSON.stringify(state)); render();}
+    const $ = (id) => document.getElementById(id);
+    const statusEl = $('status');
 
-function toKrw(amount,c){return c==='KRW'?amount:amount*state.rate;}
+    function setStatus(msg) {
+      statusEl.textContent = msg;
+      setTimeout(() => {
+        if (statusEl.textContent === msg) statusEl.textContent = '';
+      }, 1800);
+    }
 
-function renderPersons(){
-  const box=$('persons'); box.innerHTML='';
-  state.persons.forEach((p,i)=>{
-    const div=document.createElement('div'); div.className='item';
-    div.innerHTML=`<span>${p}</span><button class='danger' data-i='${i}'>삭제</button>`;
-    div.querySelector('button').onclick=()=>{ if(state.persons.length<=1) return; state.persons.splice(i,1); state.expenses=state.expenses.filter(e=>e.payer!==p); save(); };
-    box.appendChild(div);
-  });
+    function save() {
+      localStorage.setItem(KEY, JSON.stringify(state));
+      render();
+    }
 
-  const payer=$('payer'); payer.innerHTML='';
-  state.persons.forEach(p=>{const o=document.createElement('option'); o.value=p; o.textContent=p; payer.appendChild(o);});
-}
+    function toKrw(amount, c) {
+      return c === 'KRW' ? amount : amount * Number(state.rate || 0);
+    }
 
-function renderExpenses(){
-  const box=$('expenses'); box.innerHTML='';
-  state.expenses.forEach((e,i)=>{
-    const div=document.createElement('div'); div.className='item';
-    div.innerHTML=`<span><span class='pill'>${e.payer}</span> ${e.title} - ${Number(e.amount).toLocaleString()} ${e.currency}</span><button class='danger'>삭제</button>`;
-    div.querySelector('button').onclick=()=>{state.expenses.splice(i,1); save();};
-    box.appendChild(div);
-  });
-}
+    function b64urlEncode(str) {
+      return btoa(unescape(encodeURIComponent(str))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+    }
+    function b64urlDecode(str) {
+      str = str.replace(/-/g, '+').replace(/_/g, '/');
+      while (str.length % 4) str += '=';
+      return decodeURIComponent(escape(atob(str)));
+    }
 
-function calc(){
-  const n=state.persons.length||1;
-  const bal={}; state.persons.forEach(p=>bal[p]=0);
-  for(const e of state.expenses){
-    const krw=toKrw(Number(e.amount),e.currency);
-    const share=krw/n;
-    bal[e.payer]+=krw;
-    state.persons.forEach(p=>bal[p]-=share);
-  }
-  return bal;
-}
+    function shareUrl() {
+      const payload = b64urlEncode(JSON.stringify(state));
+      const u = new URL(location.href);
+      u.searchParams.set('s', payload);
+      return u.toString();
+    }
 
-function renderSettlement(){
-  const bal=calc();
-  const sum=$('summary'); sum.innerHTML='';
-  Object.entries(bal).forEach(([p,v])=>{
-    const d=document.createElement('div'); d.className='item';
-    d.innerHTML=`<span>${p}</span><strong>${Math.round(v).toLocaleString()} KRW</strong>`;
-    sum.appendChild(d);
-  });
+    function loadFromLink() {
+      const u = new URL(location.href);
+      const s = u.searchParams.get('s');
+      if (!s) return false;
+      try {
+        const obj = JSON.parse(b64urlDecode(s));
+        if (!obj || !Array.isArray(obj.persons) || !Array.isArray(obj.expenses)) throw new Error('bad data');
+        state.persons = obj.persons;
+        state.expenses = obj.expenses;
+        state.rate = Number(obj.rate || 9.0);
+        save();
+        setStatus('링크 데이터 불러오기 완료');
+        return true;
+      } catch {
+        setStatus('링크 데이터 파싱 실패');
+        return false;
+      }
+    }
 
-  const debtors=[], creditors=[];
-  for(const [p,v] of Object.entries(bal)){
-    if(v<-1) debtors.push([p,-v]);
-    if(v>1) creditors.push([p,v]);
-  }
-  debtors.sort((a,b)=>b[1]-a[1]); creditors.sort((a,b)=>b[1]-a[1]);
+    function renderPersons() {
+      const box = $('persons'); box.innerHTML = '';
+      state.persons.forEach((p, i) => {
+        const div = document.createElement('div'); div.className = 'item';
+        div.innerHTML = `<span>${p}</span><button class="danger" data-i="${i}">삭제</button>`;
+        div.querySelector('button').onclick = () => {
+          if (state.persons.length <= 1) return;
+          state.persons.splice(i, 1);
+          state.expenses = state.expenses.filter(e => e.payer !== p);
+          save();
+        };
+        box.appendChild(div);
+      });
 
-  const t=$('transfers'); t.innerHTML='';
-  let i=0,j=0;
-  while(i<debtors.length && j<creditors.length){
-    const [dp,da]=debtors[i]; const [cp,ca]=creditors[j];
-    const m=Math.min(da,ca);
-    const d=document.createElement('div'); d.className='item';
-    d.innerHTML=`<span>${dp} → ${cp}</span><strong>${Math.round(m).toLocaleString()} KRW</strong>`;
-    t.appendChild(d);
-    debtors[i][1]-=m; creditors[j][1]-=m;
-    if(debtors[i][1]<=1) i++; if(creditors[j][1]<=1) j++;
-  }
-}
+      const payer = $('payer'); payer.innerHTML = '';
+      state.persons.forEach(p => {
+        const o = document.createElement('option');
+        o.value = p; o.textContent = p;
+        payer.appendChild(o);
+      });
+    }
 
-function render(){
-  $('jpyToKrw').value=state.rate;
-  renderPersons();
-  renderExpenses();
-  renderSettlement();
-}
+    function renderExpenses() {
+      const box = $('expenses'); box.innerHTML = '';
+      state.expenses.forEach((e, i) => {
+        const krw = toKrw(Number(e.amount || 0), e.currency);
+        const div = document.createElement('div'); div.className = 'item';
+        div.innerHTML = `
+          <div class="item-main">
+            <div>
+              <span class="pill">${e.category || '기타'}</span>
+              <span class="pill">${e.payer}</span>
+              ${e.title || '지출'}
+            </div>
+            <div class="sub">${Number(e.amount).toLocaleString()} ${e.currency} (≈ ${Math.round(krw).toLocaleString()} KRW)</div>
+            ${e.memo ? `<div class="sub">🧾 ${e.memo}</div>` : ''}
+          </div>
+          <button class="danger">삭제</button>
+        `;
+        div.querySelector('button').onclick = () => { state.expenses.splice(i, 1); save(); };
+        box.appendChild(div);
+      });
+    }
 
-$('addPersonBtn').onclick=()=>{
-  const v=$('personInput').value.trim();
-  if(!v) return;
-  if(state.persons.includes(v)) return;
-  state.persons.push(v); $('personInput').value=''; save();
-};
+    function calc() {
+      const n = Math.max(1, state.persons.length);
+      const bal = Object.fromEntries(state.persons.map(p => [p, 0]));
+      let total = 0;
 
-$('addExpenseBtn').onclick=()=>{
-  const title=$('title').value.trim()||'지출';
-  const amount=Number($('amount').value||0);
-  const currency=$('currency').value;
-  const payer=$('payer').value;
-  if(amount<=0||!payer) return;
-  state.expenses.push({title,amount,currency,payer,createdAt:Date.now()});
-  $('title').value=''; $('amount').value=''; save();
-};
+      for (const e of state.expenses) {
+        const krw = toKrw(Number(e.amount || 0), e.currency);
+        total += krw;
+        const share = krw / n;
+        bal[e.payer] += krw;
+        for (const p of state.persons) bal[p] -= share;
+      }
+      return { bal, total, perHead: total / n };
+    }
 
-$('saveRateBtn').onclick=()=>{const r=Number($('jpyToKrw').value||0); if(r>0){state.rate=r; save();}};
+    function renderSettlement() {
+      const { bal, total, perHead } = calc();
+      $('totalKrw').textContent = `${Math.round(total).toLocaleString()} KRW`;
+      $('perHeadKrw').textContent = `${Math.round(perHead).toLocaleString()} KRW`;
 
-render();
-</script>
+      const sum = $('summary'); sum.innerHTML = '';
+      Object.entries(bal).forEach(([p, v]) => {
+        const d = document.createElement('div'); d.className = 'item';
+        d.innerHTML = `<span>${p}</span><strong>${Math.round(v).toLocaleString()} KRW</strong>`;
+        sum.appendChild(d);
+      });
+
+      const debtors = [], creditors = [];
+      for (const [p, v] of Object.entries(bal)) {
+        if (v < -1) debtors.push([p, -v]);
+        if (v > 1) creditors.push([p, v]);
+      }
+      debtors.sort((a, b) => b[1] - a[1]);
+      creditors.sort((a, b) => b[1] - a[1]);
+
+      const t = $('transfers'); t.innerHTML = '';
+      let i = 0, j = 0;
+      while (i < debtors.length && j < creditors.length) {
+        const [dp, da] = debtors[i];
+        const [cp, ca] = creditors[j];
+        const m = Math.min(da, ca);
+        const d = document.createElement('div'); d.className = 'item';
+        d.innerHTML = `<span>${dp} → ${cp}</span><strong>${Math.round(m).toLocaleString()} KRW</strong>`;
+        t.appendChild(d);
+        debtors[i][1] -= m; creditors[j][1] -= m;
+        if (debtors[i][1] <= 1) i++;
+        if (creditors[j][1] <= 1) j++;
+      }
+    }
+
+    function render() {
+      $('jpyToKrw').value = state.rate;
+      renderPersons();
+      renderExpenses();
+      renderSettlement();
+    }
+
+    $('addPersonBtn').onclick = () => {
+      const v = $('personInput').value.trim();
+      if (!v || state.persons.includes(v)) return;
+      state.persons.push(v);
+      $('personInput').value = '';
+      save();
+    };
+
+    $('addExpenseBtn').onclick = () => {
+      const title = $('title').value.trim() || '지출';
+      const category = $('category').value || '기타';
+      const amount = Number($('amount').value || 0);
+      const currency = $('currency').value;
+      const payer = $('payer').value;
+      const memo = $('memo').value.trim();
+      if (amount <= 0 || !payer) return;
+      state.expenses.push({ title, category, amount, currency, payer, memo, createdAt: Date.now() });
+      $('title').value = '';
+      $('amount').value = '';
+      $('memo').value = '';
+      save();
+    };
+
+    $('saveRateBtn').onclick = () => {
+      const r = Number($('jpyToKrw').value || 0);
+      if (r > 0) { state.rate = r; save(); }
+    };
+
+    $('copyShareBtn').onclick = async () => {
+      const url = shareUrl();
+      try {
+        await navigator.clipboard.writeText(url);
+        setStatus('공유 링크 복사 완료');
+      } catch {
+        prompt('복사해서 공유하세요:', url);
+      }
+    };
+
+    $('loadShareBtn').onclick = () => loadFromLink();
+
+    $('resetBtn').onclick = () => {
+      if (!confirm('전체 데이터를 초기화할까요?')) return;
+      state.persons = ['마네'];
+      state.expenses = [];
+      state.rate = 9.0;
+      save();
+      setStatus('초기화 완료');
+    };
+
+    loadFromLink();
+    render();
+  </script>
 </body>
 </html>
