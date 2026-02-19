@@ -1,0 +1,8 @@
+name = "kyoto-trip-settlement"
+compatibility_date = "2026-02-19"
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "kyoto_trip_settlement"
+database_id = "1e504508-6725-4c12-8a05-2f7c2926bc8b"
