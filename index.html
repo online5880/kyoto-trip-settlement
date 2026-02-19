@@ -128,7 +128,7 @@
   <div class="wrap">
     <section class="header">
       <h1>교토 여행 정산 ✈️💴</h1>
-      <div class="muted">브라우저 로컬 저장 + Cloudflare D1 공유 링크를 지원합니다.</div>
+      <div class="muted">Cloudflare D1 서버 저장만 사용합니다. (로컬 저장 없음)</div>
       <div class="toolbar">
         <button class="alt" id="copyShareBtn">공유 링크 생성/복사 (DB)</button>
         <button class="alt" id="loadShareBtn">링크 데이터 불러오기 (DB)</button>
@@ -207,18 +207,13 @@
   </div>
 
   <script>
-    const KEY = 'kyoto-settlement-v2';
     const defaultState = {
       persons: ['마네'],
       expenses: [],
       rate: 9.0
     };
 
-    const state = (() => {
-      const s = localStorage.getItem(KEY);
-      if (!s) return structuredClone(defaultState);
-      try { return JSON.parse(s); } catch { return structuredClone(defaultState); }
-    })();
+    const state = structuredClone(defaultState);
 
     const $ = (id) => document.getElementById(id);
     const statusEl = $('status');
@@ -242,8 +237,7 @@
     }
 
     function save() {
-      localStorage.setItem(KEY, JSON.stringify(state));
-      render();
+            render();
       scheduleSync();
     }
 
@@ -360,8 +354,7 @@
         state.persons = Array.isArray(remote.persons) ? remote.persons : ['마네'];
         state.expenses = Array.isArray(remote.expenses) ? remote.expenses : [];
         state.rate = Number(remote.rate || 9.0);
-        localStorage.setItem(KEY, JSON.stringify(state));
-        render();
+                render();
         setStatus('다른 사용자 변경사항 동기화됨');
         isRemoteApplying = false;
 
