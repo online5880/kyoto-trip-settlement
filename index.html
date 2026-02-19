@@ -41,7 +41,7 @@
     .muted { color: var(--muted); font-size: 13px; }
     .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 
-    .grid { margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: start; }
+    .grid { margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: stretch; }
     @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
 
     .card {
@@ -50,6 +50,9 @@
       border-radius: 16px;
       padding: 10px;
       box-shadow: 0 8px 20px rgba(43, 66, 178, 0.06);
+      display: flex;
+      flex-direction: column;
+      min-height: 230px;
     }
     .card h3 { margin: 0 0 10px; }
 
@@ -88,6 +91,9 @@
       margin-top: 8px;
       border-top: 1px dashed var(--line);
       padding-top: 8px;
+      flex: 1;
+      overflow: auto;
+      min-height: 90px;
     }
     .item {
       display: flex;
