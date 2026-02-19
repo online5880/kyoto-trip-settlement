@@ -68,6 +68,13 @@
     @media (max-width: 900px) { .grid { grid-template-columns: 1fr; overflow: visible; } .kpi-grid { grid-template-columns: 1fr 1fr; } body{overflow:auto;} .wrap{height:auto;} .card{height:auto;} .history-table th, .history-table td{font-size:11px;padding:6px;} .recent-table th, .recent-table td{font-size:11px;padding:6px;} }
     @media (max-width: 560px){ .kpi-grid{grid-template-columns:1fr;} }
 
+    .app-shell { display: grid; grid-template-columns: 70px 1fr; gap: 10px; height: 100%; }
+    .side-nav { border: 1px solid #DDD7CD; background: #F7F3EC; display: flex; flex-direction: column; align-items: stretch; padding: 6px; }
+    .nav-btn { background: #2A2724; color: #FCF9F3; border: 1px solid #35312E; height: 46px; margin-bottom: 6px; font-size: 12px; }
+    .nav-btn.active { background: #B06A52; border-color: #B06A52; }
+    .main-pane { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+
+
     .card {
       background: var(--card);
       border: 1px solid #DDD7CD;
@@ -181,7 +188,11 @@
   </style>
 </head>
 <body>
-  <div class="wrap">
+  <div class="wrap"><div class="app-shell"><aside class="side-nav">
+      <button class="nav-btn active" data-tab="overview">메인</button>
+      <button class="nav-btn" data-tab="expenses">지출</button>
+      <button class="nav-btn" data-tab="settings">설정</button>
+    </aside><div class="main-pane">
     <section class="header">
       <h1>교토 여행 정산 ⛩️</h1>
       <div class="muted">교토 톤 정산 보드 · D1 실시간 동기화</div>
@@ -193,7 +204,7 @@
         <span id="status" class="muted"></span>
       </div>
 
-      <div class="kpi-grid">
+      <div class="kpi-grid" id="panelKPI">
         <div class="kpi"><div class="label">총 지출</div><div id="kpiTotal" class="value" style="font-size:15px;font-weight:800;line-height:1.2;white-space:nowrap">0 KRW</div></div>
         <div class="kpi"><div class="label">공금 포함 합계</div><div id="kpiNet" class="value" style="font-size:15px;font-weight:800;line-height:1.2;white-space:nowrap">0 KRW</div></div>
         <div class="kpi"><div class="label">1인당 부담</div><div id="kpiPerHead" class="value" style="font-size:15px;font-weight:800;line-height:1.2;white-space:nowrap">0 KRW</div></div>
@@ -201,14 +212,14 @@
       </div>
     </section>
 
-      <div class="recent-wrap">
+      <div class="recent-wrap" id="panelRecent">
         <div class="recent-head">최근 지출 5개</div>
         <div id="recentExpenses"></div>
       </div>
     </section>
 
     <div class="grid">
-      <section class="card">
+      <section class="card" id="panelParticipants" data-tab="settings">
         <h3>참여자</h3>
         <div class="row">
           <input id="personInput" placeholder="이름 입력 (예: 마네)" />
@@ -217,7 +228,7 @@
         <div id="persons" class="list"></div>
       </section>
 
-      <section class="card">
+      <section class="card" id="panelExpense" data-tab="expenses">
         <h3>지출 추가</h3>
         <div class="row4">
           <input id="title" placeholder="항목명 (예: 점심)" />
@@ -266,7 +277,7 @@
         <div id="funds" class="list"></div>
       </section>
 
-      <section class="card">
+      <section class="card" id="panelRate" data-tab="settings">
         <h3>환율 설정</h3>
         <div class="row">
           <input id="rateDisplay" value="로딩 중..." readonly />
@@ -283,14 +294,14 @@
         </div>
       </section>
 
-      <section class="card">
+      <section class="card" id="panelSettlement" data-tab="overview">
         <h3>정산 결과</h3>
         <div class="sub">+는 받을 돈 / -는 보낼 돈</div>
         <div id="summary" class="list"></div>
         <div class="sub" style="margin-top:8px; font-weight:700;">송금 가이드</div>
         <div id="transfers" class="list"></div>
       </section>
-      <section class="card history-card">
+      <section class="card history-card" id="panelHistory" data-tab="expenses">
         <h3>지출 내역 (History)</h3>
         <div class="sub">결제 일시/카테고리/결제자/금액/영수증을 한 번에 확인</div>
         <div id="historyTableWrap" class="list"></div>
@@ -747,9 +758,35 @@
       setStatus('초기화 완료');
     };
 
+    
+    function applyTab(tab){
+      const show = (id, on) => { const el = document.getElementById(id); if(el) el.style.display = on ? '' : 'none'; };
+      // default hide all optional panels
+      const isOverview = tab === 'overview';
+      const isExpenses = tab === 'expenses';
+      const isSettings = tab === 'settings';
+
+      show('panelKPI', isOverview);
+      show('panelRecent', isOverview);
+      show('panelSettlement', isOverview || isExpenses);
+
+      show('panelExpense', isExpenses);
+      show('panelHistory', isExpenses);
+
+      show('panelParticipants', isSettings);
+      show('panelRate', isSettings);
+
+      document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+    }
+
+    document.querySelectorAll('.nav-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>applyTab(btn.dataset.tab));
+    });
+
     // boot
     loadFromLink();
     render();
+    applyTab('overview');
     fetchRateFromApi();
   </script>
 </body>
