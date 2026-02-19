@@ -6,16 +6,18 @@
   <title>교토 여행 정산</title>
   <style>
     :root {
-      --bg1: #f2f6ff;
-      --bg2: #fff3f7;
-      --card: rgba(255,255,255,0.9);
-      --line: #dfe5ff;
-      --text: #1d2340;
-      --muted: #6b7397;
-      --primary: #4a67ff;
-      --primary2: #6e86ff;
-      --danger: #e45c5c;
-      --ok: #25a56a;
+      --bg1: #F1ECE4;
+      --bg2: #FCF9F3;
+      --card: #FCF8F2;
+      --line: #D8D2C9;
+      --text: #35312E;
+      --muted: #756E67;
+      --primary: #B06A52;
+      --primary2: #787069;
+      --danger: #B06A52;
+      --ok: #7A816F;
+      --chip-bg: #E8E1D6;
+      --chip-text: #6F7482;
     }
     * { box-sizing: border-box; }
     body {
@@ -23,8 +25,8 @@
       color: var(--text);
       font-family: Inter, Apple SD Gothic Neo, Noto Sans KR, sans-serif;
       background:
-        radial-gradient(circle at 10% 8%, #dce7ff 0, transparent 30%),
-        radial-gradient(circle at 90% 2%, #ffd9e9 0, transparent 27%),
+        radial-gradient(circle at 10% 8%, #E6E0D7 0, transparent 34%),
+        radial-gradient(circle at 90% 2%, #DDD7CD 0, transparent 28%),
         linear-gradient(150deg, var(--bg1) 0%, var(--bg2) 100%);
       min-height: 100vh;
       overflow: hidden;
@@ -37,7 +39,7 @@
       border-radius: 16px;
       padding: 12px;
       backdrop-filter: blur(6px);
-      box-shadow: 0 10px 30px rgba(43, 66, 178, 0.08);
+      box-shadow: 0 10px 26px rgba(53, 49, 46, 0.08);
     }
     h1 { margin: 0 0 6px; font-size: 28px; }
     .muted { color: var(--muted); font-size: 13px; }
@@ -66,7 +68,7 @@
       border: 1px solid var(--line);
       border-radius: 16px;
       padding: 10px;
-      box-shadow: 0 8px 20px rgba(43, 66, 178, 0.06);
+      box-shadow: 0 8px 18px rgba(53, 49, 46, 0.06);
       display: flex;
       flex-direction: column;
       min-height: 0;
@@ -102,7 +104,7 @@
       font-weight: 700;
       cursor: pointer;
     }
-    button.alt { background: #eef2ff; color: #2a3a92; border: 1px solid var(--line); }
+    button.alt { background: var(--chip-bg); color: var(--text); border: 1px solid var(--line); }
     button.danger { background: var(--danger); }
     button.ok { background: var(--ok); }
 
@@ -119,15 +121,15 @@
       justify-content: space-between;
       gap: 8px;
       padding: 8px 0;
-      border-bottom: 1px solid #eef1ff;
+      border-bottom: 1px solid #E6E0D7;
     }
     .item-main { display: flex; flex-direction: column; gap: 3px; }
     .pill {
       display: inline-block;
       padding: 2px 8px;
       border-radius: 999px;
-      background: #edf1ff;
-      color: #2f43a5;
+      background: var(--chip-bg);
+      color: var(--chip-text);
       font-size: 12px;
       margin-right: 5px;
     }
@@ -139,8 +141,8 @@
     .totals { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
     .total-box { border: 1px solid var(--line); border-radius: 10px; padding: 10px; background: #fff; }
 
-    .ok-dot { width:8px; height:8px; border-radius:50%; background:#29b36f; display:inline-block; margin-right:5px; }
-    .warn-dot { width:8px; height:8px; border-radius:50%; background:#d89d00; display:inline-block; margin-right:5px; }
+    .ok-dot { width:8px; height:8px; border-radius:50%; background:#7A816F; display:inline-block; margin-right:5px; }
+    .warn-dot { width:8px; height:8px; border-radius:50%; background:#B06A52; display:inline-block; margin-right:5px; }
 
     .fund-section { display:none !important; }
   </style>
