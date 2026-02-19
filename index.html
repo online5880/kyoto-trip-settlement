@@ -223,6 +223,17 @@
     const $ = (id) => document.getElementById(id);
     const statusEl = $('status');
 
+    let currentShareId = null;
+    let isRemoteApplying = false;
+    let syncTimer = null;
+    let pollTimer = null;
+    let lastRemoteFingerprint = '';
+
+    function fingerprint(obj) {
+      return JSON.stringify(obj);
+    }
+
+
     function setStatus(msg) {
       statusEl.textContent = msg;
       setTimeout(() => {
@@ -233,6 +244,7 @@
     function save() {
       localStorage.setItem(KEY, JSON.stringify(state));
       render();
+      scheduleSync();
     }
 
     function toKrw(amount, c) {
@@ -266,6 +278,7 @@
 
       if (sid) {
         try {
+          currentShareId = sid;
           const res = await fetch(`/api/share/${encodeURIComponent(sid)}`);
           if (!res.ok) throw new Error('not found');
           const body = await res.json();
@@ -275,7 +288,9 @@
           state.expenses = obj.expenses;
           state.rate = Number(obj.rate || 9.0);
           save();
-          setStatus('DB 공유 링크 데이터 불러오기 완료');
+          lastRemoteFingerprint = fingerprint(state);
+          startPolling();
+          setStatus('DB 공유 링크 데이터 불러오기 완료 (실시간 동기화 ON)');
           return true;
         } catch {
           setStatus('DB 공유 링크 데이터 불러오기 실패');
@@ -301,6 +316,65 @@
       }
 
       return false;
+    }
+
+
+    async function updateShareOnServer() {
+      if (!currentShareId || isRemoteApplying) return;
+      try {
+        await fetch(`/api/share/${encodeURIComponent(currentShareId)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ state }),
+        });
+      } catch {
+        // ignore background sync errors
+      }
+    }
+
+    function scheduleSync() {
+      if (!currentShareId || isRemoteApplying) return;
+      clearTimeout(syncTimer);
+      syncTimer = setTimeout(() => {
+        updateShareOnServer();
+      }, 700);
+    }
+
+    async function pollRemote() {
+      if (!currentShareId || isRemoteApplying) return;
+      try {
+        const res = await fetch(`/api/share/${encodeURIComponent(currentShareId)}`);
+        if (!res.ok) return;
+        const body = await res.json();
+        const remote = body?.state;
+        if (!remote) return;
+
+        const f = fingerprint(remote);
+        if (!lastRemoteFingerprint) {
+          lastRemoteFingerprint = f;
+          return;
+        }
+        if (f === lastRemoteFingerprint) return;
+
+        isRemoteApplying = true;
+        state.persons = Array.isArray(remote.persons) ? remote.persons : ['마네'];
+        state.expenses = Array.isArray(remote.expenses) ? remote.expenses : [];
+        state.rate = Number(remote.rate || 9.0);
+        localStorage.setItem(KEY, JSON.stringify(state));
+        render();
+        setStatus('다른 사용자 변경사항 동기화됨');
+        isRemoteApplying = false;
+
+        lastRemoteFingerprint = f;
+      } catch {
+        // ignore poll errors
+      }
+    }
+
+    function startPolling() {
+      if (pollTimer) clearInterval(pollTimer);
+      if (!currentShareId) return;
+      pollTimer = setInterval(pollRemote, 4000);
     }
 
     function renderPersons() {
@@ -437,8 +511,15 @@
         setStatus('공유 링크 생성 중...');
         const url = await createShareUrlOnServer();
         try {
+          const u = new URL(url);
+          currentShareId = u.searchParams.get('sid');
+          lastRemoteFingerprint = fingerprint(state);
+          history.replaceState(null, '', u.toString());
+          startPolling();
+        } catch {}
+        try {
           await navigator.clipboard.writeText(url);
-          setStatus('공유 링크 복사 완료 (DB)');
+          setStatus('공유 링크 복사 완료 (DB, 실시간 동기화 ON)');
         } catch {
           prompt('복사해서 공유하세요:', url);
         }
@@ -460,6 +541,10 @@
 
     loadFromLink();
     render();
+    if (new URL(location.href).searchParams.get('sid')) {
+      currentShareId = new URL(location.href).searchParams.get('sid');
+      startPolling();
+    }
   </script>
 </body>
 </html>
