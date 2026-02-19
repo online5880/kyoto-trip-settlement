@@ -6,69 +6,66 @@
   <title>교토 여행 정산</title>
   <style>
     :root {
-      --bg1: #F1ECE4;
+      --bg1: #FCF9F3;
       --bg2: #FCF9F3;
-      --card: #FCF8F2;
-      --line: #D8D2C9;
+      --card: #FCF9F3;
+      --line: #DDD7CD;
       --text: #35312E;
       --muted: #756E67;
-      --primary: #B06A52;
-      --primary2: #787069;
+      --primary: #35312E;
+      --primary2: #35312E;
       --danger: #B06A52;
       --ok: #7A816F;
-      --chip-bg: #E8E1D6;
-      --chip-text: #6F7482;
+      --chip-bg: #F7F3EC;
+      --chip-text: #756E67;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       color: var(--text);
       font-family: Inter, Apple SD Gothic Neo, Noto Sans KR, sans-serif;
-      background:
-        radial-gradient(circle at 10% 8%, #E6E0D7 0, transparent 34%),
-        radial-gradient(circle at 90% 2%, #DDD7CD 0, transparent 28%),
-        linear-gradient(150deg, var(--bg1) 0%, var(--bg2) 100%);
+      background: #FCF9F3;
       min-height: 100vh;
       overflow: hidden;
     }
-    .wrap { width: min(98vw, 1600px); margin: 0 auto; padding: 10px; height: 100vh; display: flex; flex-direction: column; gap: 8px; }
+    .wrap { width: min(98vw, 1600px); margin: 0 auto; padding: 12px; height: 100vh; display: flex; flex-direction: column; gap: 10px; }
     .header {
       flex: 0 0 auto;
       background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 16px;
+      border: 1px solid #DDD7CD;
+      border-radius: 0;
       padding: 12px;
       backdrop-filter: blur(6px);
-      box-shadow: 0 10px 26px rgba(53, 49, 46, 0.08);
+      box-shadow: none;
     }
     h1 { margin: 0 0 6px; font-size: 28px; }
     .muted { color: var(--muted); font-size: 13px; }
-    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
 
     .kpi-grid {
       margin-top: 10px;
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 8px;
+      gap: 10px;
     }
     .kpi {
-      border: 1px solid var(--line);
-      border-radius: 12px;
+      border: 1px solid #DDD7CD;
+      border-radius: 0;
       background: #fff;
-      padding: 10px;
+      padding: 12px;
     }
     .kpi .label { font-size: 12px; color: var(--muted); }
     .kpi .value { font-size: 22px; font-weight: 800; margin-top: 2px; }
 
-    .grid { margin-top: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: stretch; flex: 1 1 auto; min-height: 0; overflow: hidden; }
+    .grid { margin-top: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch; flex: 1 1 auto; min-height: 0; overflow: hidden; }
     @media (max-width: 900px) { .grid { grid-template-columns: 1fr; overflow: visible; } .kpi-grid { grid-template-columns: 1fr 1fr; } body{overflow:auto;} .wrap{height:auto;} .card{height:auto;} }
 
     .card {
       background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 10px;
-      box-shadow: 0 8px 18px rgba(53, 49, 46, 0.06);
+      border: 1px solid #DDD7CD;
+      border-radius: 0;
+      padding: 12px;
+      box-shadow: none;
       display: flex;
       flex-direction: column;
       min-height: 0;
@@ -77,9 +74,9 @@
     }
     .card h3 { margin: 0 0 10px; }
 
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-    .row4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .row4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
     @media (max-width: 760px) {
       .row, .row3, .row4 { grid-template-columns: 1fr; }
     }
@@ -87,9 +84,9 @@
     input, select, textarea, button { font: inherit; }
     input, select, textarea {
       width: 100%;
-      padding: 10px;
-      border: 1px solid var(--line);
-      border-radius: 10px;
+      padding: 12px;
+      border: 1px solid #DDD7CD;
+      border-radius: 0;
       background: #fff;
       color: var(--text);
     }
@@ -97,14 +94,14 @@
 
     button {
       border: 0;
-      border-radius: 10px;
+      border-radius: 0;
       padding: 10px 12px;
       color: #fff;
-      background: linear-gradient(120deg, var(--primary), var(--primary2));
+      background: #35312E;
       font-weight: 700;
       cursor: pointer;
     }
-    button.alt { background: var(--chip-bg); color: var(--text); border: 1px solid var(--line); }
+    button.alt { background: var(--chip-bg); color: var(--text); border: 1px solid #DDD7CD; }
     button.danger { background: var(--danger); }
     button.ok { background: var(--ok); }
 
@@ -119,7 +116,7 @@
     .item {
       display: flex;
       justify-content: space-between;
-      gap: 8px;
+      gap: 10px;
       padding: 8px 0;
       border-bottom: 1px solid #E6E0D7;
     }
@@ -127,7 +124,7 @@
     .pill {
       display: inline-block;
       padding: 2px 8px;
-      border-radius: 999px;
+      border-radius: 0;
       background: var(--chip-bg);
       color: var(--chip-text);
       font-size: 12px;
@@ -137,9 +134,11 @@
     .transfer-row { display:flex; align-items:center; gap:8px; }
     .transfer-row input[type="checkbox"] { transform: scale(1.15); }
     .done { opacity: .55; text-decoration: line-through; }
+    .up { color: #7A816F; }
+    .down { color: #B06A52; }
 
-    .totals { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
-    .total-box { border: 1px solid var(--line); border-radius: 10px; padding: 10px; background: #fff; }
+    .totals { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .total-box { border: 1px solid #DDD7CD; border-radius: 0; padding: 12px; background: #fff; }
 
     .ok-dot { width:8px; height:8px; border-radius:50%; background:#7A816F; display:inline-block; margin-right:5px; }
     .warn-dot { width:8px; height:8px; border-radius:50%; background:#B06A52; display:inline-block; margin-right:5px; }
