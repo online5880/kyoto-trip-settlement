@@ -544,6 +544,14 @@
     const STORAGE_KEY = "kyoto-mini-settlement-state-v2";
     const PENDING_KEY = "kyoto-mini-settlement-pending";
     const FALLBACK_RATE = 9.0;
+    const DEFAULT_TRIP_INFO = {
+      title: "교토 3박 4일",
+      startDate: "2026-03-18",
+      endDate: "2026-03-21",
+      outbound: "03/18(수) 07:55 ICN T1 → 09:55 KIX T1 · 티웨이 TW301",
+      inbound: "03/21(토) 19:10 KIX T1 → 21:05 ICN T1 · 티웨이 TW306"
+    };
+
     const DEFAULT_STATE = {
       participants: ["마네", "시원", "공금"],
       expenses: [],
@@ -551,7 +559,8 @@
       rate: FALLBACK_RATE,
       payerSticky: "마네",
       sid: null,
-      rateUpdatedAt: null
+      rateUpdatedAt: null,
+      trip: DEFAULT_TRIP_INFO
     };
 
     const TAB_MAIN = "main";
@@ -753,6 +762,15 @@
         ? merged.payerSticky
         : uniqueParticipants[0];
 
+      const tripRaw = merged.trip && typeof merged.trip === "object" ? merged.trip : {};
+      const trip = {
+        title: String(tripRaw.title || DEFAULT_TRIP_INFO.title),
+        startDate: String(tripRaw.startDate || DEFAULT_TRIP_INFO.startDate),
+        endDate: String(tripRaw.endDate || DEFAULT_TRIP_INFO.endDate),
+        outbound: String(tripRaw.outbound || DEFAULT_TRIP_INFO.outbound),
+        inbound: String(tripRaw.inbound || DEFAULT_TRIP_INFO.inbound)
+      };
+
       return {
         participants: uniqueParticipants,
         expenses,
@@ -760,7 +778,8 @@
         rate: Number(merged.rate || FALLBACK_RATE),
         payerSticky,
         sid: merged.sid ? String(merged.sid) : null,
-        rateUpdatedAt: merged.rateUpdatedAt ? String(merged.rateUpdatedAt) : null
+        rateUpdatedAt: merged.rateUpdatedAt ? String(merged.rateUpdatedAt) : null,
+        trip
       };
     }
 
@@ -786,6 +805,11 @@
       const [noteText, setNoteText] = useState("");
       const [editingNoteId, setEditingNoteId] = useState(null);
       const [editingNoteText, setEditingNoteText] = useState("");
+      const [tripTitle, setTripTitle] = useState(state.trip.title || "");
+      const [tripStartDate, setTripStartDate] = useState(state.trip.startDate || "");
+      const [tripEndDate, setTripEndDate] = useState(state.trip.endDate || "");
+      const [tripOutbound, setTripOutbound] = useState(state.trip.outbound || "");
+      const [tripInbound, setTripInbound] = useState(state.trip.inbound || "");
       const pollRef = useRef(null);
       const pushTimerRef = useRef(null);
       const undoTimerRef = useRef(null);
@@ -859,6 +883,14 @@
           setPayer(state.participants[0] || "마네");
         }
       }, [state.participants, payer]);
+
+      useEffect(() => {
+        setTripTitle(state.trip.title || "");
+        setTripStartDate(state.trip.startDate || "");
+        setTripEndDate(state.trip.endDate || "");
+        setTripOutbound(state.trip.outbound || "");
+        setTripInbound(state.trip.inbound || "");
+      }, [state.trip]);
 
       useEffect(() => {
         return () => {
@@ -1188,6 +1220,25 @@
         }
       }
 
+      function tripPeriodLabel() {
+        if (!state.trip.startDate || !state.trip.endDate) return "여행 기간 미설정";
+        return `${state.trip.startDate} ~ ${state.trip.endDate}`;
+      }
+
+      function saveTripInfo() {
+        updateState((prev) => ({
+          ...prev,
+          trip: {
+            title: String(tripTitle || "").trim() || DEFAULT_TRIP_INFO.title,
+            startDate: String(tripStartDate || "").trim() || DEFAULT_TRIP_INFO.startDate,
+            endDate: String(tripEndDate || "").trim() || DEFAULT_TRIP_INFO.endDate,
+            outbound: String(tripOutbound || "").trim() || DEFAULT_TRIP_INFO.outbound,
+            inbound: String(tripInbound || "").trim() || DEFAULT_TRIP_INFO.inbound
+          }
+        }));
+        alert("여행 기본정보를 저장했습니다.");
+      }
+
       function resetAll() {
         if (!confirm("전체 데이터를 초기화할까요?")) return;
         const base = normalizeState({ ...DEFAULT_STATE, sid: state.sid });
@@ -1431,6 +1482,15 @@
 
           tab === TAB_NOTES && React.createElement("section", { className: "stack" },
             React.createElement("article", { className: "card" },
+              React.createElement("div", { className: "label" }, "여행 일정"),
+              React.createElement("div", { className: "sync-state" }, `${state.trip.title || "여행 제목"} · ${state.trip.startDate || "-"} ~ ${state.trip.endDate || "-"}`),
+              React.createElement("div", { className: "sync-state", style: { marginTop: "4px", fontWeight: 700 } }, "가는편"),
+              React.createElement("div", { className: "sync-state" }, state.trip.outbound || "-"),
+              React.createElement("div", { style: { borderTop: "1px dashed #d6ccbd", margin: "8px 0" } }),
+              React.createElement("div", { className: "sync-state", style: { fontWeight: 700 } }, "오는편"),
+              React.createElement("div", { className: "sync-state" }, state.trip.inbound || "-")
+            ),
+            React.createElement("article", { className: "card" },
               React.createElement("div", { className: "label", style: { marginBottom: "8px" } }, "메모"),
               React.createElement("div", { className: "sync-state", style: { marginBottom: "8px" } }, "일반 텍스트/링크를 함께 저장할 수 있습니다."),
               React.createElement("div", { className: "note-form" },
@@ -1488,6 +1548,45 @@
           ),
 
           tab === TAB_SETTINGS && React.createElement("section", { className: "stack" },
+            React.createElement("article", { className: "card" },
+              React.createElement("div", { className: "label" }, "여행 기본정보"),
+              React.createElement("div", { className: "settings-row" },
+                React.createElement("input", {
+                  className: "field",
+                  placeholder: "여행 이름",
+                  value: tripTitle,
+                  onChange: (e) => setTripTitle(e.target.value)
+                }),
+                React.createElement("div", { className: "inline", style: { gridTemplateColumns: "1fr 1fr" } },
+                  React.createElement("input", {
+                    className: "field",
+                    type: "date",
+                    value: tripStartDate,
+                    onChange: (e) => setTripStartDate(e.target.value)
+                  }),
+                  React.createElement("input", {
+                    className: "field",
+                    type: "date",
+                    value: tripEndDate,
+                    onChange: (e) => setTripEndDate(e.target.value)
+                  })
+                ),
+                React.createElement("input", {
+                  className: "field",
+                  placeholder: "가는편 정보",
+                  value: tripOutbound,
+                  onChange: (e) => setTripOutbound(e.target.value)
+                }),
+                React.createElement("input", {
+                  className: "field",
+                  placeholder: "오는편 정보",
+                  value: tripInbound,
+                  onChange: (e) => setTripInbound(e.target.value)
+                }),
+                React.createElement("button", { className: "btn alt", onClick: saveTripInfo }, "여행정보 저장")
+              )
+            ),
+
             React.createElement("article", { className: "card" },
               React.createElement("div", { className: "label" }, "참여자 관리"),
               React.createElement("div", { className: "settings-row" },
